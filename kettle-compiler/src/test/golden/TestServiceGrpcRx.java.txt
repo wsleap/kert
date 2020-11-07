@@ -1,0 +1,260 @@
+
+package io.grpc.testing.integration;
+
+import static io.grpc.MethodDescriptor.generateFullMethodName;
+import io.grpc.rx.stub.ClientCallsRx;
+import io.grpc.rx.stub.ServerCallsRx;
+@javax.annotation.Generated(
+  value = "by gRPC proto compiler (version 0.5.0)",
+  comments = "Source: test.proto")
+public class TestServiceGrpcRx {
+
+  private TestServiceGrpcRx() {}
+
+  public static final String SERVICE_NAME = "grpc.testing.TestService";
+
+  // Static method descriptors that strictly reflect the proto.
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  public static final io.grpc.MethodDescriptor<io.grpc.testing.integration.Test.SimpleRequest,
+    io.grpc.testing.integration.Test.SimpleResponse> METHOD_UNARY_CALL =
+    io.grpc.MethodDescriptor.<io.grpc.testing.integration.Test.SimpleRequest, io.grpc.testing.integration.Test.SimpleResponse>newBuilder()
+      .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+      .setFullMethodName(generateFullMethodName("grpc.testing.TestService", "UnaryCall"))
+      .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(io.grpc.testing.integration.Test.SimpleRequest.getDefaultInstance()))
+      .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(io.grpc.testing.integration.Test.SimpleResponse.getDefaultInstance()))
+      .build();
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  public static final io.grpc.MethodDescriptor<io.grpc.testing.integration.Test.StreamingOutputCallRequest,
+    io.grpc.testing.integration.Test.StreamingOutputCallResponse> METHOD_STREAMING_OUTPUT_CALL =
+    io.grpc.MethodDescriptor.<io.grpc.testing.integration.Test.StreamingOutputCallRequest, io.grpc.testing.integration.Test.StreamingOutputCallResponse>newBuilder()
+      .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+      .setFullMethodName(generateFullMethodName("grpc.testing.TestService", "StreamingOutputCall"))
+      .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(io.grpc.testing.integration.Test.StreamingOutputCallRequest.getDefaultInstance()))
+      .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(io.grpc.testing.integration.Test.StreamingOutputCallResponse.getDefaultInstance()))
+      .build();
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  public static final io.grpc.MethodDescriptor<io.grpc.testing.integration.Test.StreamingInputCallRequest,
+    io.grpc.testing.integration.Test.StreamingInputCallResponse> METHOD_STREAMING_INPUT_CALL =
+    io.grpc.MethodDescriptor.<io.grpc.testing.integration.Test.StreamingInputCallRequest, io.grpc.testing.integration.Test.StreamingInputCallResponse>newBuilder()
+      .setType(io.grpc.MethodDescriptor.MethodType.CLIENT_STREAMING)
+      .setFullMethodName(generateFullMethodName("grpc.testing.TestService", "StreamingInputCall"))
+      .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(io.grpc.testing.integration.Test.StreamingInputCallRequest.getDefaultInstance()))
+      .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(io.grpc.testing.integration.Test.StreamingInputCallResponse.getDefaultInstance()))
+      .build();
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  public static final io.grpc.MethodDescriptor<io.grpc.testing.integration.Test.StreamingOutputCallRequest,
+    io.grpc.testing.integration.Test.StreamingOutputCallResponse> METHOD_FULL_BIDI_CALL =
+    io.grpc.MethodDescriptor.<io.grpc.testing.integration.Test.StreamingOutputCallRequest, io.grpc.testing.integration.Test.StreamingOutputCallResponse>newBuilder()
+      .setType(io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING)
+      .setFullMethodName(generateFullMethodName("grpc.testing.TestService", "FullBidiCall"))
+      .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(io.grpc.testing.integration.Test.StreamingOutputCallRequest.getDefaultInstance()))
+      .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(io.grpc.testing.integration.Test.StreamingOutputCallResponse.getDefaultInstance()))
+      .build();
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  public static final io.grpc.MethodDescriptor<io.grpc.testing.integration.Test.StreamingOutputCallRequest,
+    io.grpc.testing.integration.Test.StreamingOutputCallResponse> METHOD_HALF_BIDI_CALL =
+    io.grpc.MethodDescriptor.<io.grpc.testing.integration.Test.StreamingOutputCallRequest, io.grpc.testing.integration.Test.StreamingOutputCallResponse>newBuilder()
+      .setType(io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING)
+      .setFullMethodName(generateFullMethodName("grpc.testing.TestService", "HalfBidiCall"))
+      .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(io.grpc.testing.integration.Test.StreamingOutputCallRequest.getDefaultInstance()))
+      .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(io.grpc.testing.integration.Test.StreamingOutputCallResponse.getDefaultInstance()))
+      .build();
+
+  /**
+   * Creates a new RX stub
+   */
+  public static TestServiceStub newStub(io.grpc.Channel channel) {
+    return new TestServiceStub(channel);
+  }
+
+  /**
+   * Creates a new RX stub with call options
+   */
+  public static TestServiceStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+    return new TestServiceStub(channel, callOptions);
+  }
+
+  
+  public static abstract class TestServiceImplBase implements io.grpc.BindableService {public io.reactivex.Single<io.grpc.testing.integration.Test.SimpleResponse> unaryCall(io.grpc.testing.integration.Test.SimpleRequest request) {
+      return ServerCallsRx.unimplementedUnaryCall(METHOD_UNARY_CALL);
+    }public io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallResponse> streamingOutputCall(io.grpc.testing.integration.Test.StreamingOutputCallRequest request) {
+      return ServerCallsRx.unimplementedStreamingCall(METHOD_STREAMING_OUTPUT_CALL);
+    }public io.reactivex.Single<io.grpc.testing.integration.Test.StreamingInputCallResponse> streamingInputCall(io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingInputCallRequest> request) {
+      return ServerCallsRx.unimplementedUnaryCall(METHOD_STREAMING_INPUT_CALL);
+    }public io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallResponse> fullBidiCall(io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallRequest> request) {
+      return ServerCallsRx.unimplementedStreamingCall(METHOD_FULL_BIDI_CALL);
+    }public io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallResponse> halfBidiCall(io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallRequest> request) {
+      return ServerCallsRx.unimplementedStreamingCall(METHOD_HALF_BIDI_CALL);
+    }
+
+    @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
+      return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
+        .addMethod(
+          METHOD_UNARY_CALL,
+          ServerCallsRx.unaryCall(
+            new MethodHandlers<
+              io.grpc.testing.integration.Test.SimpleRequest,
+              io.grpc.testing.integration.Test.SimpleResponse>(
+              this, METHODID_UNARY_CALL)))
+        .addMethod(
+          METHOD_STREAMING_OUTPUT_CALL,
+          ServerCallsRx.serverStreamingCall(
+            new MethodHandlers<
+              io.grpc.testing.integration.Test.StreamingOutputCallRequest,
+              io.grpc.testing.integration.Test.StreamingOutputCallResponse>(
+              this, METHODID_STREAMING_OUTPUT_CALL)))
+        .addMethod(
+          METHOD_STREAMING_INPUT_CALL,
+          ServerCallsRx.clientStreamingCall(
+            new MethodHandlers<
+              io.grpc.testing.integration.Test.StreamingInputCallRequest,
+              io.grpc.testing.integration.Test.StreamingInputCallResponse>(
+              this, METHODID_STREAMING_INPUT_CALL)))
+        .addMethod(
+          METHOD_FULL_BIDI_CALL,
+          ServerCallsRx.bidiStreamingCall(
+            new MethodHandlers<
+              io.grpc.testing.integration.Test.StreamingOutputCallRequest,
+              io.grpc.testing.integration.Test.StreamingOutputCallResponse>(
+              this, METHODID_FULL_BIDI_CALL)))
+        .addMethod(
+          METHOD_HALF_BIDI_CALL,
+          ServerCallsRx.bidiStreamingCall(
+            new MethodHandlers<
+              io.grpc.testing.integration.Test.StreamingOutputCallRequest,
+              io.grpc.testing.integration.Test.StreamingOutputCallResponse>(
+              this, METHODID_HALF_BIDI_CALL)))
+        .build();
+    }
+  }
+
+  
+  public static class TestServiceStub extends io.grpc.stub.AbstractStub<TestServiceStub> {
+    private TestServiceStub(io.grpc.Channel channel) {
+      super(channel);
+    }
+
+    private TestServiceStub(io.grpc.Channel channel,
+                            io.grpc.CallOptions callOptions) {
+      super(channel, callOptions);
+    }
+
+    @java.lang.Override
+    protected TestServiceStub build(io.grpc.Channel channel,
+                                    io.grpc.CallOptions callOptions) {
+      return new TestServiceStub(channel, callOptions);
+    }public io.reactivex.Single<io.grpc.testing.integration.Test.SimpleResponse> unaryCall(io.grpc.testing.integration.Test.SimpleRequest request) {
+      return ClientCallsRx.unaryCall(
+        getChannel().newCall(METHOD_UNARY_CALL, getCallOptions()), request);
+    }public io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallResponse> streamingOutputCall(io.grpc.testing.integration.Test.StreamingOutputCallRequest request) {
+      return ClientCallsRx.serverStreamingCall(
+        getChannel().newCall(METHOD_STREAMING_OUTPUT_CALL, getCallOptions()), request);
+    }public io.reactivex.Single<io.grpc.testing.integration.Test.StreamingInputCallResponse> streamingInputCall(io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingInputCallRequest> request) {
+      return ClientCallsRx.clientStreamingCall(
+        getChannel().newCall(METHOD_STREAMING_INPUT_CALL, getCallOptions()), request, getCallOptions());
+    }public io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallResponse> fullBidiCall(io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallRequest> request) {
+      return ClientCallsRx.bidiStreamingCall(
+        getChannel().newCall(METHOD_FULL_BIDI_CALL, getCallOptions()), request, getCallOptions());
+    }public io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallResponse> halfBidiCall(io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallRequest> request) {
+      return ClientCallsRx.bidiStreamingCall(
+        getChannel().newCall(METHOD_HALF_BIDI_CALL, getCallOptions()), request, getCallOptions());
+    }
+  }
+
+  
+  private static final int METHODID_UNARY_CALL = 0;
+  private static final int METHODID_STREAMING_OUTPUT_CALL = 1;
+  private static final int METHODID_STREAMING_INPUT_CALL = 2;
+  private static final int METHODID_FULL_BIDI_CALL = 3;
+  private static final int METHODID_HALF_BIDI_CALL = 4;
+
+  private static class MethodHandlers<Req, Resp> implements
+    io.grpc.rx.stub.ServerCallsRx.UnaryMethod<Req, Resp>,
+    io.grpc.rx.stub.ServerCallsRx.ServerStreamingMethod<Req, Resp>,
+    io.grpc.rx.stub.ServerCallsRx.ClientStreamingMethod<Req, Resp>,
+    io.grpc.rx.stub.ServerCallsRx.BidiStreamingMethod<Req, Resp> {
+    private final TestServiceImplBase serviceImpl;
+    private final int methodId;
+
+    public MethodHandlers(TestServiceImplBase serviceImpl, int methodId) {
+      this.serviceImpl = serviceImpl;
+      this.methodId = methodId;
+    }
+
+    @java.lang.Override
+    @java.lang.SuppressWarnings("unchecked")
+    public io.reactivex.Single<Resp> unaryInvoke(Req request) {
+      switch (methodId) {
+        case METHODID_UNARY_CALL:
+          return (io.reactivex.Single<Resp>) serviceImpl.unaryCall((io.grpc.testing.integration.Test.SimpleRequest) request);
+        default:
+          throw new AssertionError();
+      }
+    }
+
+    @java.lang.Override
+    @java.lang.SuppressWarnings("unchecked")
+    public io.reactivex.Flowable<Resp> serverStreamingInvoke(Req request) {
+      switch (methodId) {
+        case METHODID_STREAMING_OUTPUT_CALL:
+          return (io.reactivex.Flowable<Resp>) serviceImpl.streamingOutputCall((io.grpc.testing.integration.Test.StreamingOutputCallRequest) request);
+        default:
+          throw new AssertionError();
+      }
+    }
+
+    @java.lang.Override
+    @java.lang.SuppressWarnings("unchecked")
+    public io.reactivex.Single<Resp> clientStreamingInvoke(io.reactivex.Flowable<Req> requests) {
+      switch (methodId) {
+        case METHODID_STREAMING_INPUT_CALL:
+          return (io.reactivex.Single<Resp>) serviceImpl.streamingInputCall((io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingInputCallRequest>) requests);
+        default:
+          throw new AssertionError();
+      }
+    }
+
+    @java.lang.Override
+    @java.lang.SuppressWarnings("unchecked")
+    public io.reactivex.Flowable<Resp> bidiStreamingInvoke(io.reactivex.Flowable<Req> requests) {
+      switch (methodId) {
+        case METHODID_FULL_BIDI_CALL:
+          return (io.reactivex.Flowable<Resp>) serviceImpl.fullBidiCall((io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallRequest>) requests);
+        case METHODID_HALF_BIDI_CALL:
+          return (io.reactivex.Flowable<Resp>) serviceImpl.halfBidiCall((io.reactivex.Flowable<io.grpc.testing.integration.Test.StreamingOutputCallRequest>) requests);
+        default:
+          throw new AssertionError();
+      }
+    }
+
+  }
+
+  private static final class TestServiceDescriptorSupplier implements io.grpc.protobuf.ProtoFileDescriptorSupplier {
+    @java.lang.Override
+    public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
+      return io.grpc.testing.integration.Test.getDescriptor();
+    }
+  }
+
+  private static volatile io.grpc.ServiceDescriptor serviceDescriptor;
+
+  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
+    io.grpc.ServiceDescriptor result = serviceDescriptor;
+    if (result == null) {
+      synchronized (TestServiceGrpcRx.class) {
+        result = serviceDescriptor;
+        if (result == null) {
+          serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
+            .setSchemaDescriptor(new TestServiceDescriptorSupplier())
+            .addMethod(METHOD_UNARY_CALL)
+            .addMethod(METHOD_STREAMING_OUTPUT_CALL)
+            .addMethod(METHOD_STREAMING_INPUT_CALL)
+            .addMethod(METHOD_FULL_BIDI_CALL)
+            .addMethod(METHOD_HALF_BIDI_CALL)
+            .build();
+        }
+      }
+    }
+    return result;
+  }
+}
