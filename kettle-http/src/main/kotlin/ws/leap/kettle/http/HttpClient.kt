@@ -34,8 +34,6 @@ class HttpClient private constructor(private val underlying: VHttpClient) {
         .setDefaultHost(baseAddress.host)
         .setDefaultPort(baseAddress.port)
         .setProtocolVersion(HttpVersion.HTTP_2)
-        .setMaxChunkSize(8 * 1024)
-        .setInitialSettings(Http2Settings().setMaxFrameSize(16 * 1024))
         .setSsl(false)
 
       val vertxClient = Kettle.vertx.createHttpClient(options)

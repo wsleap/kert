@@ -14,7 +14,6 @@ plugins {
 
 allprojects {
   group = "ws.leap.kettle"
-  version = "0.0.1-SNAPSHOT"
 
   apply {
     plugin("idea")

@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import ws.leap.kettle.http.HttpClient
 import ws.leap.kettle.http.server
 import ws.leap.kettle.test.EchoCountReq
 import ws.leap.kettle.test.EchoGrpcKt
@@ -26,7 +25,7 @@ class GrpcBasicSpec : FunSpec() {
     }
   }
 
-  private val client = EchoGrpcKt.newStub(HttpClient.create(URL("http://localhost:8888")), URL("http://localhost:8888"))
+  private val client = EchoGrpcKt.newStub(URL("http://localhost:8888"))
 
   override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
     server.start()

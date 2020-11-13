@@ -24,14 +24,18 @@ suspend fun VHttpServerResponse.write(body: Flow<Buffer>) {
 }
 
 class HttpServerContext(internal val underlying: VRoutingContext, val request: HttpServerRequest) {
-  fun response(statusCode: Int = 200) = HttpServerResponse(flowOf(), 0, statusCode)
-  fun response(body: ByteArray, statusCode: Int = 200) = HttpServerResponse(flowOf(Buffer.buffer(body)), body.size.toLong(), statusCode)
-  fun response(body: String, statusCode: Int = 200): HttpServerResponse {
+  fun response(statusCode: Int = 200) =
+    HttpServerResponse(flowOf(), null, 0, statusCode)
+  fun response(body: ByteArray, contentType: String? = null, statusCode: Int = 200) =
+    HttpServerResponse(flowOf(Buffer.buffer(body)), contentType, body.size.toLong(), statusCode)
+  fun response(body: String, contentType: String? = null, statusCode: Int = 200): HttpServerResponse {
     val bodyBytes = body.toByteArray()
-    return response(bodyBytes, statusCode)
+    return response(bodyBytes, contentType, statusCode)
   }
-  fun response(body: Buffer, statusCode: Int = 200) = HttpServerResponse(flowOf(body), body.length().toLong(), statusCode)
-  fun response(body: Flow<Buffer>, contentLength: Long? = null, statusCode: Int? = null) = HttpServerResponse(body, contentLength, statusCode)
+  fun response(body: Buffer, contentType: String? = null, statusCode: Int = 200) =
+    HttpServerResponse(flowOf(body), contentType, body.length().toLong(), statusCode)
+  fun response(body: Flow<Buffer>, contentType: String? = null, contentLength: Long? = null, statusCode: Int? = null) =
+    HttpServerResponse(body, contentType, contentLength, statusCode)
 
   val pathParams: MutableMap<String, String> = underlying.pathParams()
 }
@@ -72,7 +76,6 @@ open class HttpRouter(internal val underlying: Router, private val exceptionHand
 
   fun route(method: HttpMethod, path: String, handler: suspend HttpServerContext.() -> HttpServerResponse) {
     underlying.route(method, path).handler { routingContext ->
-      val context = Vertx.currentContext()
       val request = HttpServerRequest(routingContext.request())
       val httpServerContext = HttpServerContext(routingContext, request)
 

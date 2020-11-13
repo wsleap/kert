@@ -1,5 +1,9 @@
 import build.*
 
+description = "Kettle HTTP support"
+
+librarySupport()
+
 dependencies {
   api("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Deps.kotlinVersion}")
   api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Deps.kotlinCoroutineVersion}")

@@ -1,9 +1,8 @@
 package ws.leap.kettle.grpc
 
+import com.google.protobuf.AbstractMessage
 import io.grpc.MethodDescriptor
-import io.netty.buffer.ByteBuf
-import io.netty.buffer.ByteBufUtil
-import io.netty.buffer.Unpooled
+import io.netty.buffer.*
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.streams.ReadStream
 import io.vertx.core.streams.WriteStream
@@ -39,7 +38,7 @@ object GrpcUtils {
   }
 
   private fun <T> readMessage(buf: ByteBuf, deserializer: (ByteBuf, Int) -> T): T? {
-    if(buf.readableBytes() <= Constants.messageHeaderSize) return null
+    if(buf.readableBytes() < Constants.messageHeaderSize) return null
 
     val slice = buf.slice()  // create a slice so read won't change reader position
     val compressedFlag = slice.readUnsignedByte()
@@ -57,20 +56,25 @@ object GrpcUtils {
     return deserializer(buf, messageSize.toInt())
   }
 
-  fun <M> serializeMessagePacket(message: M, serializer: (M) -> ByteBuf): ByteBuf {
+  fun <M> serializeMessagePacket(message: M): ByteBuf {
+    require(message is AbstractMessage)
     val buf = Unpooled.buffer()
-    val messageBytes = serializer(message)
     buf.writeByte(0)
-    buf.writeInt(messageBytes.readableBytes())
-    buf.writeBytes(messageBytes)
+    buf.writeInt(message.serializedSize)
+    serialize(message, buf)
     return buf
+  }
+
+  private fun serialize(message: AbstractMessage, buf: ByteBuf) {
+    val out = ByteBufOutputStream(buf)
+    message.writeTo(out)
   }
 
   fun <ReqT> requestSerializer(method: MethodDescriptor<ReqT, *>): (ReqT) -> ByteBuf {
     return { msg: ReqT ->
       val msgStream = method.streamRequest(msg)
       val buf = Unpooled.buffer()
-      buf.writeBytes(msgStream, Constants.maxMessageSize) // TODO how to get the actual stream size
+      buf.writeBytes(msgStream, 1024) // TODO how to get the actual stream size
       buf
     }
   }
@@ -79,27 +83,22 @@ object GrpcUtils {
     return { msg: RespT ->
       val msgStream = method.streamResponse(msg)
       val buf = Unpooled.buffer()
-      buf.writeBytes(msgStream, Constants.maxMessageSize) // TODO how to get the actual stream size
+      // TODO bad performance
+      buf.writeBytes(msgStream, 1024) // TODO how to get the actual stream size
       buf
     }
   }
 
   fun <ReqT> requestDeserializer(method: MethodDescriptor<ReqT, *>): (ByteBuf, Int) -> ReqT {
     return { buf: ByteBuf, size: Int ->
-      val messageBuf = ByteArray(size)
-      buf.readBytes(messageBuf)
-      val inStream = ByteArrayInputStream(messageBuf)
-
+      val inStream = ByteBufInputStream(buf, size)
       method.parseRequest(inStream)
     }
   }
 
   fun <RespT> responseDeserializer(method: MethodDescriptor<*, RespT>): (ByteBuf, Int) -> RespT {
     return { buf: ByteBuf, size: Int ->
-      val messageBuf = ByteArray(size)
-      buf.readBytes(messageBuf)
-      val inStream = ByteArrayInputStream(messageBuf)
-
+      val inStream = ByteBufInputStream(buf, size)
       method.parseResponse(inStream)
     }
   }

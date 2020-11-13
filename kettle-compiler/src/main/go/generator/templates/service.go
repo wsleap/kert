@@ -5,10 +5,14 @@ const (
 {{- with $s := .}}
 package {{$s.JavaPackage}}
 
+import java.net.URL
 import kotlinx.coroutines.flow.Flow
 import io.grpc.MethodDescriptor.generateFullMethodName
 import ws.leap.kettle.grpc.ClientCalls
 import ws.leap.kettle.grpc.ServerCalls
+import ws.leap.kettle.http.HttpClient
+import ws.leap.kettle.grpc.CallOptions
+import ws.leap.kettle.grpc.AbstractStub
 
 {{/**
  * <pre>
@@ -36,15 +40,17 @@ object {{$s.Name}}GrpcKt {
   /**
    * Creates a new RX stub
    */
-  fun newStub(client: ws.leap.kettle.http.HttpClient, address: java.net.URL): {{.Name}}Stub {
-    return {{.Name}}Stub(client, address)
+  fun newStub(address: URL): {{.Name}}Stub {
+    val client = HttpClient.create(address)
+    return {{.Name}}Stub(client)
   }
 
   /**
    * Creates a new RX stub with call options
    */
-  fun newStub(client: ws.leap.kettle.http.HttpClient, address: java.net.URL, callOptions: ws.leap.kettle.grpc.CallOptions): {{.Name}}Stub {
-    return {{.Name}}Stub(client, address, callOptions)
+  fun newStub(address: URL, callOptions: CallOptions): {{.Name}}Stub {
+    val client = HttpClient.create(address)
+    return {{.Name}}Stub(client, callOptions)
   }
 
   {{/**
@@ -95,13 +101,8 @@ object {{$s.Name}}GrpcKt {
    * Test service that supports all call types.
    * </pre>
    */}}
-  class {{$s.Name}}Stub internal constructor(client: ws.leap.kettle.http.HttpClient, address: java.net.URL, callOptions: ws.leap.kettle.grpc.CallOptions = ws.leap.kettle.grpc.CallOptions())
-    : ws.leap.kettle.grpc.AbstractStub<{{$s.Name}}Stub>(client, address, callOptions), {{$s.Name}} {
-
-    override fun build(client: ws.leap.kettle.http.HttpClient, address: java.net.URL, callOptions: ws.leap.kettle.grpc.CallOptions): {{$s.Name}}Stub {
-      return {{$s.Name}}Stub(client, address, callOptions)
-    }
-
+  class {{$s.Name}}Stub internal constructor(client: HttpClient, callOptions: CallOptions = CallOptions())
+    : AbstractStub<{{$s.Name}}Stub>(client, callOptions), {{$s.Name}} {
     {{range $i, $m := .Methods}}
     {{- /**
      * <pre>

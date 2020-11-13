@@ -17,13 +17,8 @@ class CallOptions {
 
 abstract class AbstractStub<S>(
   private val client: HttpClient,
-  address: URL,
   protected val callOptions: CallOptions = CallOptions()
 ) {
-  private val scheme = address.protocol
-  private val host= address.host
-  private val port = if (address.port != -1) address.port else address.defaultPort
-
   protected fun <ReqT, RespT> newCall(method: MethodDescriptor<ReqT, RespT>,
                                       callOptions: CallOptions
   ): ClientCallHandler<ReqT, RespT> {
@@ -33,7 +28,7 @@ abstract class AbstractStub<S>(
         val responseDeserializer = GrpcUtils.responseDeserializer(method)
 
         val httpRequestFlow = requests.map { msg ->
-          val buf = GrpcUtils.serializeMessagePacket(msg, requestSerializer)
+          val buf = GrpcUtils.serializeMessagePacket(msg)
           Buffer.buffer(buf)
         }
 
@@ -45,13 +40,23 @@ abstract class AbstractStub<S>(
           }
 
           // fail the flow if trailer is missing or not OK
-          val statusCode = httpResponse.trailers[Constants.status]?.toInt() ?: throw IllegalStateException("GRPC status is missing")
+          val statusCode = httpResponse.trailers[Constants.grpcStatus]?.toInt() ?: throw IllegalStateException("GRPC status is missing")
           val status = Status.fromCodeValue(statusCode)
-          if (!status.isOk) throw status.asException()
+          if (!status.isOk) {
+            throw status.withDescription(httpResponse.trailers[Constants.grpcMessage] ?: "").asException()
+          }
         }
       }
     }
   }
 
-  protected abstract fun build(client: HttpClient, address: URL, callOptions: CallOptions): S
+  /**
+   * Use an existing HttpClient to make calls, with provided [address] as base URL of the service.
+   */
+  // protected abstract fun build(client: HttpClient, address: URL, callOptions: CallOptions): S
+
+  /**
+   * Create a HttpClient with [address] as base URL, and use it for calls.
+   */
+  // protected abstract fun build(address: URL, callOptions: CallOptions): S
 }

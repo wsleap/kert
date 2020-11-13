@@ -6,15 +6,15 @@ import org.gradle.api.publish.maven.MavenPom
 
 object Consts {
   private val osDetector = OsDetector()
-  
+
   val os = osDetector.os
   val arch = osDetector.arch
   val exeSuffix = if(os == "windows") ".exe" else ""
 
   val pom = Action<MavenPom> {
-    name.set("grpc-kt")
-    description.set("GRPC stub & compiler for Kotlin Coroutine")
-    url.set("https://github.com/xiaodongw/grpc-kt")
+    name.set("kettle")
+    description.set("Concise HTTP & GRPC library for Kotlin")
+    url.set("https://github.com/wsleap/kettle")
     licenses {
       license {
         name.set("The Apache License, Version 2.0")
@@ -29,9 +29,9 @@ object Consts {
       }
     }
     scm {
-      connection.set("scm:git:git://github.com/xiaodongw/grpc-kt.git")
-      developerConnection.set("scm:git:ssh://github.com/xiaodongw/grpc-kt.git")
-      url.set("https://github.com/xiaodongw/grpc-kt.git")
+      connection.set("scm:git:git://github.com/wsleap/kettle.git")
+      developerConnection.set("scm:git:ssh://github.com/wsleap/kettle.git")
+      url.set("https://github.com/wsleap/kettle.git")
     }
   }
 }

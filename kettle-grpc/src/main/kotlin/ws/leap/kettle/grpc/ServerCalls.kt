@@ -1,6 +1,5 @@
 package ws.leap.kettle.grpc
 
-import com.google.common.base.Preconditions.checkNotNull
 import io.grpc.MethodDescriptor
 import io.grpc.Status
 import kotlinx.coroutines.flow.*
@@ -63,14 +62,12 @@ object ServerCalls {
 
   fun <T> unimplementedUnaryCall(
     methodDescriptor: MethodDescriptor<*, *>): T {
-    checkNotNull(methodDescriptor)
     throw Status.UNIMPLEMENTED
       .withDescription("Method ${methodDescriptor.fullMethodName} is unimplemented")
       .asRuntimeException()
   }
 
   fun <T> unimplementedStreamingCall(methodDescriptor: MethodDescriptor<*, *>): Flow<T> {
-    checkNotNull(methodDescriptor)
     throw Status.UNIMPLEMENTED
       .withDescription("Method ${methodDescriptor.fullMethodName} is unimplemented")
       .asRuntimeException()

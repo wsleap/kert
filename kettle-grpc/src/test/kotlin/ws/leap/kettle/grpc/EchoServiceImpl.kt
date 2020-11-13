@@ -65,6 +65,37 @@ class EchoServiceImpl : EchoGrpcKt.EchoImplBase() {
   }
 }
 
+/*
+Summary:
+  Count:	1007645
+  Total:	10.00 s
+  Slowest:	39.20 ms
+  Fastest:	0.09 ms
+  Average:	0.89 ms
+  Requests/sec:	100749.94
+
+Response time histogram:
+  0.086 [1]	|
+  3.997 [981567]	|∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  7.908 [14266]	|∎
+  11.819 [2758]	|
+  15.731 [863]	|
+  19.642 [346]	|
+  23.553 [135]	|
+  27.465 [47]	|
+  31.376 [12]	|
+  35.287 [4]	|
+  39.199 [1]	|
+
+Latency distribution:
+  10 % in 0.33 ms
+  25 % in 0.47 ms
+  50 % in 0.66 ms
+  75 % in 0.94 ms
+  90 % in 1.42 ms
+  95 % in 2.16 ms
+  99 % in 5.46 ms
+ */
 fun main() = runBlocking {
   val server = server(8888) {
     grpc {

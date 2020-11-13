@@ -1,13 +1,19 @@
 import build.*
 import com.google.protobuf.gradle.*
 
+description = "Kettle GRPC support"
+
+librarySupport()
+
 dependencies {
   api(project(":kettle-http"))
   api("com.google.protobuf:protobuf-java:${Deps.protobufVersion}")
   api("io.grpc:grpc-protobuf:${Deps.grpcJavaVersion}")
-  api("io.grpc:grpc-stub:${Deps.grpcJavaVersion}")
 
   api("javax.annotation:javax.annotation-api:1.3.2")
+
+  testImplementation("io.grpc:grpc-stub:${Deps.grpcJavaVersion}")
+  testImplementation("io.grpc:grpc-netty:${Deps.grpcJavaVersion}")
 }
 
 protobuf {

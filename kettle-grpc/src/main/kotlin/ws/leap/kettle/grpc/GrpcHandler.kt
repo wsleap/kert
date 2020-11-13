@@ -3,8 +3,10 @@ package ws.leap.kettle.grpc
 import io.grpc.Status
 import ws.leap.kettle.http.*
 import io.vertx.core.buffer.Buffer
+import io.vertx.core.http.HttpMethod
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 val grpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
@@ -12,7 +14,11 @@ val grpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
   val response = routingContext.response()
   if (!response.ended()) {
     val status = Status.fromThrowable(exception)
-    response.putTrailer(Constants.status, status.code.value().toString())
+    response.putTrailer(Constants.grpcStatus, status.code.value().toString())
+    exception.message?.let {
+      response.putTrailer(Constants.grpcMessage, it)
+    }
+
     response.end()
   }
 }
@@ -29,23 +35,24 @@ class GrpcHandler(router: HttpRouter, configureRegistry: ServiceRegistry.() -> U
 
   init {
     configureRegistry(registry)
-      for(service in registry.services()) {
-        router.post("/${service.serviceDescriptor.name}/:method") {
-          // get method from url
-          val methodName = pathParams["method"] ?: throw IllegalArgumentException("method is not provided")
-          val method = registry.lookupMethod("${service.serviceDescriptor.name}/${methodName}")
-          if (method != null) {
-            val responseFlow = handleRequest(this, method)
-            val resp = response(responseFlow)
-            resp.trailers[Constants.status] = Status.OK.code.value().toString()
-            resp
-          } else {
-            val resp = response()
-            resp.trailers[Constants.status] = Status.NOT_FOUND.code.value().toString()
-            resp
-          }
+
+    for(service in registry.services()) {
+      router.route(HttpMethod.POST, "/${service.serviceDescriptor.name}/:method") {
+        // get method from url
+        val methodName = pathParams["method"] ?: throw IllegalArgumentException("method is not provided")
+        val method = registry.lookupMethod("${service.serviceDescriptor.name}/${methodName}")
+        if (method != null) {
+          val responseFlow = handleRequest(this, method)
+          val resp = response(responseFlow, contentType = Constants.contentTypeProto)
+          resp.trailers[Constants.grpcStatus] = Status.OK.code.value().toString()
+          resp
+        } else {
+          val resp = response(flowOf(), contentType = Constants.contentTypeProto)
+          resp.trailers[Constants.grpcStatus] = Status.NOT_FOUND.code.value().toString()
+          resp
         }
       }
+    }
   }
 
   private suspend fun <ReqT, RespT> handleRequest(context: HttpServerContext, method: ServerMethodDefinition<ReqT, RespT>): Flow<Buffer> {
@@ -57,7 +64,7 @@ class GrpcHandler(router: HttpRouter, configureRegistry: ServiceRegistry.() -> U
     val requests = GrpcUtils.readMessages(context.request.body, requestDeserializer)
     val responses = method.callHandler.invoke(requests)
     return responses.map { msg ->
-      val buf = GrpcUtils.serializeMessagePacket(msg, responseSerializer)
+      val buf = GrpcUtils.serializeMessagePacket(msg)
       Buffer.buffer(buf)
     }
   }

@@ -47,7 +47,7 @@ fun Project.pluginSupport(pluginName: String) {
     dependsOn("buildPlugin")
     from("$buildDir/exe") {
       if (Consts.os != "windows") {
-        rename(name, "$0.exe")
+        rename("(.+)", "$1.exe")
       }
     }
     into(artifactStagingPath)
@@ -71,7 +71,8 @@ fun Project.pluginSupport(pluginName: String) {
       ofSourceSet("test").forEach {
         it.plugins {
           id("kotlin") {
-            option("write_input=true")
+            // enable this to write the input request to disk
+            // option("write_input=true")
           }
         }
       }

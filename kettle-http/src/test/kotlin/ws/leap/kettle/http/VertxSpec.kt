@@ -2,20 +2,24 @@ package ws.leap.kettle.http
 
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.FunSpec
-import io.vertx.core.Vertx
+import io.vertx.core.*
 import io.vertx.core.http.*
 import io.vertx.core.streams.Pump
 import io.vertx.ext.web.Router
+import io.vertx.kotlin.coroutines.await
+import kotlinx.coroutines.runBlocking
 
 fun createServer(vertx: Vertx): HttpServer {
   val options = HttpServerOptions()
     .setSsl(false)
     .setUseAlpn(true)
-    .setMaxChunkSize(16 * 1024)
-    .setInitialSettings(Http2Settings().setMaxFrameSize(16 * 1024))
   val server = vertx.createHttpServer(options)
 
   val router = Router.router(vertx)
+
+  router.get("/ping").handler { ctx ->
+    ctx.response().send("pong")
+  }
 
   router.post("/bidi-stream").handler { ctx ->
     ctx.response().setChunked(true)
@@ -61,8 +65,22 @@ fun createServer(vertx: Vertx): HttpServer {
 
 fun main() {
   val vertx = Vertx.vertx()
-  val server = createServer(vertx)
-  server.listen(8888)
+  class ServerVerticle: AbstractVerticle() {
+    private lateinit var server: HttpServer
+    override fun init(vertx: Vertx, context: Context) {
+      server = createServer(vertx)
+    }
+
+    override fun start() {
+      server.listen(8888)
+    }
+
+    override fun stop() {
+      server.close()
+    }
+  }
+
+  vertx.deployVerticle( { ServerVerticle() }, DeploymentOptions().setInstances(VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE))
 }
 
 // test bidi stream with vertx raw http client & server api
@@ -84,8 +102,15 @@ class VertxSpec : FunSpec() {
   }
 
   override fun beforeSpec(spec: Spec) {
-    server.listen(8888)
-    Thread.sleep(500)
+    runBlocking {
+      server.listen(8888).await()
+    }
+  }
+
+  override fun afterSpec(spec: Spec) {
+    runBlocking {
+      server.close().await()
+    }
   }
 
   init {

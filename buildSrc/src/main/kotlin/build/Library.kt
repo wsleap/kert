@@ -1,6 +1,7 @@
 package build
 
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.SourceSetContainer
@@ -28,12 +29,20 @@ fun Project.librarySupport() {
 //    }
   }
 
+  configure<JavaPluginExtension> {
+    withSourcesJar()
+  }
+
+  tasks.named<Jar>("sourcesJar") {
+    archiveClassifier.set("sources")
+    from(sourceSets.getByName("main").allSource)
+  }
+
   configure<PublishingExtension> {
     publications {
       create<MavenPublication>("maven") {
+        artifactId = project.name
         from(components["java"])
-        artifact(tasks["sourcesJar"])
-        //artifact(tasks["javadocJar"])
 
         versionMapping {
           usage("java-api") {

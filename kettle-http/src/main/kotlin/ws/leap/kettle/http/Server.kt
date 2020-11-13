@@ -1,12 +1,14 @@
 package ws.leap.kettle.http
 
-import io.vertx.core.Vertx
+import io.vertx.core.*
 import io.vertx.core.http.Http2Settings
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
+import io.vertx.core.http.HttpServerRequest
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.await
 import kotlinx.coroutines.CoroutineExceptionHandler
+import java.util.function.Supplier
 
 class RouterConfigurator(private val router: Router) {
   fun http(exceptionHandler: CoroutineExceptionHandler? = null): HttpRouter {
@@ -20,32 +22,64 @@ class RouterConfigurator(private val router: Router) {
   }
 }
 
-class Server(private val underlying: HttpServer, private val port: Int) {
+internal class ServerVerticle(private val port: Int, private val router: Router) : AbstractVerticle() {
+  private lateinit var server: HttpServer
+
+  private fun createServer(vertx: Vertx): HttpServer {
+    val options = HttpServerOptions()
+      .setSsl(false)
+
+    return vertx.createHttpServer(options)
+  }
+
+  override fun deploymentID(): String {
+    return "kettle-deployment"
+  }
+
+  override fun init(vertx: Vertx, context: Context) {
+    server = createServer(vertx)
+    server.requestHandler(router)
+  }
+
+  override fun start(startPromise: Promise<Void>) {
+    server.listen(port).onComplete { ar ->
+      if(ar.succeeded()) startPromise.complete()
+      else startPromise.fail(ar.cause())
+    }
+  }
+
+  override fun stop(stopPromise: Promise<Void>) {
+    server.close().onComplete { ar ->
+      if(ar.succeeded()) stopPromise.complete()
+      else stopPromise.fail(ar.cause())
+    }
+  }
+}
+
+class Server(private val port: Int, private val configureRouter: RouterConfigurator.() -> Unit) {
+  private var deployId: String? = null
+
   suspend fun start() {
-    underlying.listen(port).await()
+    if(deployId != null) return
+
+    val router = Router.router(Kettle.vertx)
+    val routerConfigurator = RouterConfigurator(router)
+    configureRouter(routerConfigurator)
+
+    val desiredInstances = VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE
+    val deploymentOptions = DeploymentOptions().setInstances(desiredInstances)
+    deployId = Kettle.vertx.deployVerticle({ ServerVerticle(port, router) }, deploymentOptions).await()
   }
 
   suspend fun stop() {
-    underlying.close().await()
+    deployId?.let {
+      Kettle.vertx.undeploy(it).await()
+    }
+
+    deployId = null
   }
 }
 
 fun server(port: Int, configureRouter: RouterConfigurator.() -> Unit): Server {
-  val vertx = Kettle.vertx
-
-  val options = HttpServerOptions()
-    .setSsl(false)
-    .setMaxChunkSize(16 * 1024)
-    .setInitialSettings(Http2Settings().setMaxFrameSize(16 * 1024))
-
-  val httpServer = vertx.createHttpServer(options)
-
-  val router = Router.router(vertx)
-  val routerConfigurator = RouterConfigurator(router)
-
-  configureRouter(routerConfigurator)
-
-  httpServer.requestHandler(router)
-
-  return Server(httpServer, port)
+  return Server(port, configureRouter)
 }
