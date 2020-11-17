@@ -14,7 +14,7 @@ import java.net.URL
 
 class GrpcErrorSpec : FunSpec() {
   val logger = KotlinLogging.logger {}
-  private val server = server(8888) {
+  private val server = server(8081) {
     grpc {
       val echoService = object: EchoGrpcKt.EchoImplBase() {
         override suspend fun unary(req: EchoReq): EchoResp {
@@ -75,7 +75,7 @@ class GrpcErrorSpec : FunSpec() {
     }
   }
 
-  private val client = EchoGrpcKt.newStub(URL("http://localhost:8888"))
+  private val client = EchoGrpcKt.newStub(URL("http://localhost:8081"))
 
   override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
     server.start()

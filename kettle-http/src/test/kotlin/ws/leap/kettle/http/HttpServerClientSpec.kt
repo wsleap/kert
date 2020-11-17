@@ -13,7 +13,7 @@ import java.net.URL
 class HttpServerClientSpec : FunSpec() {
   private val logger = KotlinLogging.logger {}
   private val server = httpTestServer()
-  private val client = HttpClient.create(URL("http://localhost:8888"))
+  private val client = HttpClient.create(URL("http://localhost:8080"))
 
   override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
     server.start()

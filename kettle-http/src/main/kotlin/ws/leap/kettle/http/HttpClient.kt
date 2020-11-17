@@ -2,7 +2,6 @@ package ws.leap.kettle.http
 
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.http.Http2Settings
 import io.vertx.core.http.HttpClientOptions
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpVersion
@@ -15,7 +14,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.lang.IllegalArgumentException
 import java.net.URL
 import kotlin.coroutines.coroutineContext
 import io.vertx.core.http.HttpClient as VHttpClient

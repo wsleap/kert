@@ -17,7 +17,7 @@ import kotlin.coroutines.CoroutineContext
 import io.vertx.core.http.HttpServerResponse as VHttpServerResponse
 import io.vertx.ext.web.RoutingContext as VRoutingContext
 
-suspend fun VHttpServerResponse.write(body: Flow<Buffer>) {
+private suspend fun VHttpServerResponse.write(body: Flow<Buffer>) {
   body.collect { data ->
     write(data).await()
   }

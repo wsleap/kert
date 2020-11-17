@@ -19,13 +19,13 @@ import java.net.URL
 
 class GrpcBasicSpec : FunSpec() {
   val logger = KotlinLogging.logger {}
-  private val server = server(8888) {
+  private val server = server(8081) {
     grpc {
       addService(EchoServiceImpl())
     }
   }
 
-  private val client = EchoGrpcKt.newStub(URL("http://localhost:8888"))
+  private val client = EchoGrpcKt.newStub(URL("http://localhost:8081"))
 
   override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
     server.start()

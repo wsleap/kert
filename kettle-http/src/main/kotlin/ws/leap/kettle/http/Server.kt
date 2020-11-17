@@ -1,14 +1,11 @@
 package ws.leap.kettle.http
 
 import io.vertx.core.*
-import io.vertx.core.http.Http2Settings
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
-import io.vertx.core.http.HttpServerRequest
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.await
 import kotlinx.coroutines.CoroutineExceptionHandler
-import java.util.function.Supplier
 
 class RouterConfigurator(private val router: Router) {
   fun http(exceptionHandler: CoroutineExceptionHandler? = null): HttpRouter {
@@ -33,7 +30,7 @@ internal class ServerVerticle(private val port: Int, private val router: Router)
   }
 
   override fun deploymentID(): String {
-    return "kettle-deployment"
+    return "kettle-http"
   }
 
   override fun init(vertx: Vertx, context: Context) {
@@ -74,9 +71,8 @@ class Server(private val port: Int, private val configureRouter: RouterConfigura
   suspend fun stop() {
     deployId?.let {
       Kettle.vertx.undeploy(it).await()
+      deployId = null
     }
-
-    deployId = null
   }
 }
 

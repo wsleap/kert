@@ -10,9 +10,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.reduce
 
 class HttpServerRequest(private val underlying: HttpServerRequest) {
-  private val context = run {
-    Vertx.currentContext() ?: throw IllegalStateException("Request must be created on vertx context")
-  }
+  private val context = Vertx.currentContext() ?: throw IllegalStateException("Request must be created on vertx context")
   val headers: MultiMap = underlying.headers()
   fun header(name: String): String? = underlying.getHeader(name)
   val params: MultiMap = underlying.params()

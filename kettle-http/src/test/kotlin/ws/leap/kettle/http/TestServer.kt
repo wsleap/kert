@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
-fun httpTestServer(): Server = server(8888) {
+fun httpTestServer(): Server = server(8080) {
   val logger = KotlinLogging.logger {}
 
   http {
