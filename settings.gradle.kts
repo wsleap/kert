@@ -1,5 +1,5 @@
-rootProject.name = "kettle"
+rootProject.name = "kert"
 
-include(":kettle-http")
-include(":kettle-grpc")
-include(":kettle-compiler")
+include(":kert-http")
+include(":kert-grpc")
+include(":kert-compiler")

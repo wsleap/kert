@@ -12,9 +12,9 @@ object Consts {
   val exeSuffix = if(os == "windows") ".exe" else ""
 
   val pom = Action<MavenPom> {
-    name.set("kettle")
+    name.set("kert")
     description.set("Concise HTTP & GRPC library for Kotlin")
-    url.set("https://github.com/wsleap/kettle")
+    url.set("https://github.com/wsleap/kert")
     licenses {
       license {
         name.set("The Apache License, Version 2.0")
@@ -29,9 +29,9 @@ object Consts {
       }
     }
     scm {
-      connection.set("scm:git:git://github.com/wsleap/kettle.git")
-      developerConnection.set("scm:git:ssh://github.com/wsleap/kettle.git")
-      url.set("https://github.com/wsleap/kettle.git")
+      connection.set("scm:git:git://github.com/wsleap/kert.git")
+      developerConnection.set("scm:git:ssh://github.com/wsleap/kert.git")
+      url.set("https://github.com/wsleap/kert.git")
     }
   }
 }

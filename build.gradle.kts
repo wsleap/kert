@@ -13,7 +13,7 @@ plugins {
 }
 
 allprojects {
-  group = "ws.leap.kettle"
+  group = "ws.leap.kert"
 
   apply {
     plugin("idea")
