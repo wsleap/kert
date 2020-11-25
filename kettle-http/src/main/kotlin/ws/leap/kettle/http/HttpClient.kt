@@ -25,7 +25,9 @@ suspend fun VHttpClientRequest.write(body: Flow<Buffer>) {
   }
 }
 
-class HttpClient private constructor(private val underlying: VHttpClient) {
+typealias HttpClientFilter = suspend (req: HttpClientRequest, next: suspend (HttpClientRequest) -> HttpClientResponse) -> HttpClientResponse
+
+class HttpClient internal constructor(private val underlying: VHttpClient, private val filters: HttpClientFilter? = null) {
   companion object {
     fun create(baseAddress: URL): HttpClient {
       val options = HttpClientOptions()
@@ -57,14 +59,18 @@ class HttpClient private constructor(private val underlying: VHttpClient) {
     }
   }
 
-  suspend fun get(path: String) = invoke(request(HttpMethod.GET, path))
-  suspend fun head(path: String) = invoke(request(HttpMethod.HEAD, path))
-  suspend fun put(path: String, body: Any, contentLength: Long? = null) = invoke(request(HttpMethod.PUT, path, body, contentLength))
-  suspend fun post(path: String, body: Any, contentLength: Long? = null) = invoke(request(HttpMethod.POST, path, body, contentLength))
-  suspend fun delete(path: String) = invoke(request(HttpMethod.DELETE, path))
-  suspend fun patch(path: String, body: Any, contentLength: Long? = null) = invoke(request(HttpMethod.PATCH, path, body, contentLength))
+  suspend fun get(path: String) = call(request(HttpMethod.GET, path))
+  suspend fun head(path: String) = call(request(HttpMethod.HEAD, path))
+  suspend fun put(path: String, body: Any, contentLength: Long? = null) = call(request(HttpMethod.PUT, path, body, contentLength))
+  suspend fun post(path: String, body: Any, contentLength: Long? = null) = call(request(HttpMethod.POST, path, body, contentLength))
+  suspend fun delete(path: String) = call(request(HttpMethod.DELETE, path))
+  suspend fun patch(path: String, body: Any, contentLength: Long? = null) = call(request(HttpMethod.PATCH, path, body, contentLength))
 
-  suspend fun invoke(request: HttpClientRequest): HttpClientResponse {
+  suspend fun call(request: HttpClientRequest): HttpClientResponse {
+    return filters?.let { it(request, ::callHandler) } ?: callHandler(request)
+  }
+
+  private suspend fun callHandler(request: HttpClientRequest): HttpClientResponse {
     val responseDeferred = CompletableDeferred<HttpClientResponse>()
     val scope = CoroutineScope(coroutineContext)
 
@@ -73,6 +79,9 @@ class HttpClient private constructor(private val underlying: VHttpClient) {
         val vertxRequest = ar.result()
         val vertxContext = Vertx.currentContext()
 
+        for(header in request.headers) {
+          vertxRequest.putHeader(header.key, header.value)
+        }
         vertxRequest.isChunked = request.chunked
 
         // start send request body
@@ -100,4 +109,45 @@ class HttpClient private constructor(private val underlying: VHttpClient) {
 
     return responseDeferred.await()
   }
+}
+
+class ClientBuilder(private val address: URL) {
+  private val filters = mutableListOf<HttpClientFilter>()
+
+  var protocolVersion: HttpVersion = HttpVersion.HTTP_1_1
+
+  fun filter(filter: HttpClientFilter) {
+    filters.add(filter)
+  }
+
+  private fun constructFilterChain(): HttpClientFilter? {
+    var current: HttpClientFilter? = null
+    for(filter in filters) {
+      current = current?.let {
+        { req, next ->
+          it(req) { filter(it, next) }
+        }
+      } ?: filter
+    }
+
+    return current
+  }
+
+  fun build(): HttpClient {
+    val options = HttpClientOptions()
+      .setDefaultHost(address.host)
+      .setDefaultPort(address.port)
+      .setProtocolVersion(protocolVersion)
+      .setSsl(address.protocol == "https")
+
+    val filter = constructFilterChain()
+    val vertxClient = Kettle.vertx.createHttpClient(options)
+    return HttpClient(vertxClient, filter)
+  }
+}
+
+fun client(address: URL, configureBuilder: ClientBuilder.() -> Unit): HttpClient {
+  val builder = ClientBuilder(address)
+  configureBuilder(builder)
+  return builder.build()
 }

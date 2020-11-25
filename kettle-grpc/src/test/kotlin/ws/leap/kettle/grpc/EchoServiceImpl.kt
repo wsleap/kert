@@ -12,7 +12,7 @@ import ws.leap.kettle.http.server
 
 object EchoTest {
   val streamSize = 500
-  val message = "hello".repeat(4000)
+  val message = "hello".repeat(1024)
 }
 
 class EchoServiceImpl : EchoGrpcKt.EchoImplBase() {

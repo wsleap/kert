@@ -12,6 +12,20 @@ fun httpTestServer(): Server = server(8080) {
   val logger = KotlinLogging.logger {}
 
   http {
+    filter { req, next ->
+      logger.info { "request ${req.path} in filter1" }
+      val resp = next(req)
+      logger.info { "response for ${resp} in filter1" }
+      resp
+    }
+
+    filter { req, next ->
+      logger.info { "request ${req.path} in filter2" }
+      val resp = next(req)
+      logger.info { "response for ${resp} in filter2" }
+      resp
+    }
+
     get("/ping") {
       val data = Buffer.buffer("pong".toByteArray())
       response(data)
@@ -28,9 +42,9 @@ fun httpTestServer(): Server = server(8080) {
       response(data)
     }
 
-    post("/client-stream") {
+    post("/client-stream") { req ->
       var total = 0L
-      request.body.collect { data ->
+      req.body.collect { data ->
         total += data.length()
         delay(1)
         logger.info { "received data, total=$total" }
@@ -39,9 +53,9 @@ fun httpTestServer(): Server = server(8080) {
       response()
     }
 
-    post("/bidi-stream") {
+    post("/bidi-stream") { req ->
       var total = 0L
-      val data = request.body.map { data ->
+      val data = req.body.map { data ->
         total += data.length()
         delay(1)
         logger.info { "received data, total=$total" }
@@ -49,6 +63,19 @@ fun httpTestServer(): Server = server(8080) {
       }
 
       response(data)
+    }
+
+    router("/sub") {
+      filter { req, next ->
+        logger.info { "request ${req.path} in sub filter" }
+        val resp = next(req)
+        logger.info { "response for ${resp} in sub filter" }
+        resp
+      }
+
+      get("/hello") {
+        response("world")
+      }
     }
   }
 }

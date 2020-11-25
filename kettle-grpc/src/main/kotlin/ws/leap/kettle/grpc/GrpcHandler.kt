@@ -23,7 +23,7 @@ val grpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
   }
 }
 
-fun RouterConfigurator.grpc(configureRegistry: ServiceRegistry.() -> Unit) {
+fun ServerBuilder.grpc(configureRegistry: ServiceRegistry.() -> Unit) {
   val router = http(grpcExceptionHandler)
   GrpcHandler(router, configureRegistry)
 }
@@ -37,12 +37,12 @@ class GrpcHandler(router: HttpRouter, configureRegistry: ServiceRegistry.() -> U
     configureRegistry(registry)
 
     for(service in registry.services()) {
-      router.route(HttpMethod.POST, "/${service.serviceDescriptor.name}/:method") {
+      router.call(HttpMethod.POST, "/${service.serviceDescriptor.name}/:method") { req ->
         // get method from url
-        val methodName = pathParams["method"] ?: throw IllegalArgumentException("method is not provided")
+        val methodName = req.pathParams["method"] ?: throw IllegalArgumentException("method is not provided")
         val method = registry.lookupMethod("${service.serviceDescriptor.name}/${methodName}")
         if (method != null) {
-          val responseFlow = handleRequest(this, method)
+          val responseFlow = handleRequest(req, method)
           val resp = response(responseFlow, contentType = Constants.contentTypeProto)
           resp.trailers[Constants.grpcStatus] = Status.OK.code.value().toString()
           resp
@@ -55,13 +55,13 @@ class GrpcHandler(router: HttpRouter, configureRegistry: ServiceRegistry.() -> U
     }
   }
 
-  private suspend fun <ReqT, RespT> handleRequest(context: HttpServerContext, method: ServerMethodDefinition<ReqT, RespT>): Flow<Buffer> {
-    verifyHeaders(context.request)
+  private suspend fun <ReqT, RespT> handleRequest(request: HttpServerRequest, method: ServerMethodDefinition<ReqT, RespT>): Flow<Buffer> {
+    verifyHeaders(request)
 
     val requestDeserializer = GrpcUtils.requestDeserializer(method.methodDescriptor)
     val responseSerializer = GrpcUtils.responseSerializer(method.methodDescriptor)
 
-    val requests = GrpcUtils.readMessages(context.request.body, requestDeserializer)
+    val requests = GrpcUtils.readMessages(request.body, requestDeserializer)
     val responses = method.callHandler.invoke(requests)
     return responses.map { msg ->
       val buf = GrpcUtils.serializeMessagePacket(msg)

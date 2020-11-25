@@ -23,22 +23,18 @@ private suspend fun VHttpServerResponse.write(body: Flow<Buffer>) {
   }
 }
 
-class HttpServerContext(internal val underlying: VRoutingContext, val request: HttpServerRequest) {
-  fun response(statusCode: Int = 200) =
-    HttpServerResponse(flowOf(), null, 0, statusCode)
-  fun response(body: ByteArray, contentType: String? = null, statusCode: Int = 200) =
-    HttpServerResponse(flowOf(Buffer.buffer(body)), contentType, body.size.toLong(), statusCode)
-  fun response(body: String, contentType: String? = null, statusCode: Int = 200): HttpServerResponse {
-    val bodyBytes = body.toByteArray()
-    return response(bodyBytes, contentType, statusCode)
-  }
-  fun response(body: Buffer, contentType: String? = null, statusCode: Int = 200) =
-    HttpServerResponse(flowOf(body), contentType, body.length().toLong(), statusCode)
-  fun response(body: Flow<Buffer>, contentType: String? = null, contentLength: Long? = null, statusCode: Int? = null) =
-    HttpServerResponse(body, contentType, contentLength, statusCode)
-
-  val pathParams: MutableMap<String, String> = underlying.pathParams()
+fun response(statusCode: Int = 200) =
+  HttpServerResponse(flowOf(), null, 0, statusCode)
+fun response(body: ByteArray, contentType: String? = null, statusCode: Int = 200) =
+  HttpServerResponse(flowOf(Buffer.buffer(body)), contentType, body.size.toLong(), statusCode)
+fun response(body: String, contentType: String? = null, statusCode: Int = 200): HttpServerResponse {
+  val bodyBytes = body.toByteArray()
+  return response(bodyBytes, contentType, statusCode)
 }
+fun response(body: Buffer, contentType: String? = null, statusCode: Int = 200) =
+  HttpServerResponse(flowOf(body), contentType, body.length().toLong(), statusCode)
+fun response(body: Flow<Buffer>, contentType: String? = null, contentLength: Long? = null, statusCode: Int? = null) =
+  HttpServerResponse(body, contentType, contentLength, statusCode)
 
 data class VertxRoutingContext(
   val routingContext: VRoutingContext
@@ -62,7 +58,7 @@ val defaultExceptionHandler = CoroutineExceptionHandler { context, exception ->
   }
 }
 
-open class HttpRouter(internal val underlying: Router, private val exceptionHandler: CoroutineExceptionHandler? = null) {
+open class HttpRouter(internal val underlying: Router, private var filters: HttpServerFilter? = null, private val exceptionHandler: CoroutineExceptionHandler? = null) {
   protected fun exceptionHandler(): CoroutineExceptionHandler = exceptionHandler ?: defaultExceptionHandler
 
   protected open fun createContext(routingContext: VRoutingContext): CoroutineContext {
@@ -70,19 +66,24 @@ open class HttpRouter(internal val underlying: Router, private val exceptionHand
     return context.dispatcher() + VertxRoutingContext(routingContext) + exceptionHandler()
   }
 
-  fun call(configure: HttpRouter.() -> Unit) {
-    configure(this)
+  fun filter(filter: HttpServerFilter) {
+    filters = filters?.let { current ->
+      { req, next ->
+        current(req) { filter(it, next) }
+      }
+    } ?: filter
   }
 
-  fun route(method: HttpMethod, path: String, handler: suspend HttpServerContext.() -> HttpServerResponse) {
-    underlying.route(method, path).handler { routingContext ->
-      val request = HttpServerRequest(routingContext.request())
-      val httpServerContext = HttpServerContext(routingContext, request)
+  private suspend fun callHandler(request: HttpServerRequest, handler: suspend (HttpServerRequest) -> HttpServerResponse): HttpServerResponse {
+    return filters?.let { it(request, handler) } ?: handler(request)
+  }
 
-      // TODO add tracing, request logging, request metrics
+  fun call(method: HttpMethod, path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+    underlying.route(method, path).handler { routingContext ->
+      val request = HttpServerRequest(routingContext.request(), routingContext)
 
       GlobalScope.launch(createContext(routingContext)) {
-        val response = handler(httpServerContext)
+        val response = callHandler(request, handler)
         val vertxResponse = routingContext.response()
 
         // copy headers
@@ -105,31 +106,40 @@ open class HttpRouter(internal val underlying: Router, private val exceptionHand
     }
   }
 
-  fun get(path: String, handler: suspend HttpServerContext.() -> HttpServerResponse) {
-    route(HttpMethod.GET, path, handler)
+  fun get(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+    call(HttpMethod.GET, path, handler)
   }
 
-  fun head(path: String, handler: suspend HttpServerContext.() -> HttpServerResponse) {
-    route(HttpMethod.HEAD, path, handler)
+  fun head(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+    call(HttpMethod.HEAD, path, handler)
   }
 
-  fun post(path: String, handler: suspend HttpServerContext.() -> HttpServerResponse) {
-    route(HttpMethod.POST, path, handler)
+  fun post(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+    call(HttpMethod.POST, path, handler)
   }
 
-  fun put(path: String, handler: suspend HttpServerContext.() -> HttpServerResponse) {
-    route(HttpMethod.PUT, path, handler)
+  fun put(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+    call(HttpMethod.PUT, path, handler)
   }
 
-  fun delete(path: String, handler: suspend HttpServerContext.() -> HttpServerResponse) {
-    route(HttpMethod.DELETE, path, handler)
+  fun delete(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+    call(HttpMethod.DELETE, path, handler)
   }
 
-  fun patch(path: String, handler: suspend HttpServerContext.() -> HttpServerResponse) {
-    route(HttpMethod.PATCH, path, handler)
+  fun patch(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+    call(HttpMethod.PATCH, path, handler)
   }
 
-  fun options(path: String, handler: suspend HttpServerContext.() -> HttpServerResponse) {
-    route(HttpMethod.OPTIONS, path, handler)
+  fun options(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+    call(HttpMethod.OPTIONS, path, handler)
+  }
+
+  fun router(path: String, exceptionHandler: CoroutineExceptionHandler? = null, configure: HttpRouter.() -> Unit): HttpRouter {
+    val vertxRouter = Router.router(Kettle.vertx)
+    val router = HttpRouter(vertxRouter, filters, exceptionHandler ?: this.exceptionHandler)
+    configure(router)
+
+    underlying.mountSubRouter(path, vertxRouter)
+    return router
   }
 }

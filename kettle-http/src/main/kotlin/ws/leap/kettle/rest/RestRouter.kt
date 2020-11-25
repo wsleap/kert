@@ -3,17 +3,18 @@ package ws.leap.kettle.rest
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.vertx.core.http.HttpMethod
 import ws.leap.kettle.http.HttpRouter
-import ws.leap.kettle.http.RouterConfigurator
+import ws.leap.kettle.http.ServerBuilder
+import ws.leap.kettle.http.response
 
-fun RouterConfigurator.rest(mapper: ObjectMapper, configure: RestRouter.() -> Unit) {
+fun ServerBuilder.rest(mapper: ObjectMapper, configure: RestRouter.() -> Unit) {
   val router = RestRouter(mapper, http())
   configure(router)
 }
 
 class RestRouter(val mapper: ObjectMapper, val underlying: HttpRouter) {
   inline fun <reified REQ, RESP> route(method: HttpMethod, path: String, noinline handler: suspend (REQ) -> RESP) {
-    underlying.route(method, path) {
-      val requestJson = request.body().toString("utf8")
+    underlying.call(method, path) { req ->
+      val requestJson = req.body().toString("utf8")
       val req = mapper.readValue<REQ>(requestJson, REQ::class.java)
       val resp = handler(req)
       val responseJson = mapper.writeValueAsBytes(resp)
