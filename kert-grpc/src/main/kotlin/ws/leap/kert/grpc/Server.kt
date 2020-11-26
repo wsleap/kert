@@ -1,8 +1,10 @@
 package ws.leap.kert.grpc
 
 import io.grpc.Status
+import io.vertx.core.MultiMap
 import ws.leap.kert.http.*
 import io.vertx.core.buffer.Buffer
+import io.vertx.core.http.HttpHeaders
 import io.vertx.core.http.HttpMethod
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.Flow
@@ -23,18 +25,27 @@ val grpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
   }
 }
 
-fun ServerBuilder.grpc(configureRegistry: ServiceRegistry.() -> Unit) {
+fun ServerBuilder.grpc(configure: GrpcServerBuilder.() -> Unit) {
   val router = http(grpcExceptionHandler)
-  GrpcHandler(router, configureRegistry)
+  val builder = GrpcServerBuilder(router)
+  configure(builder)
+  builder.build()
 }
 
 // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
-class GrpcHandler(router: HttpRouter, configureRegistry: ServiceRegistry.() -> Unit) {
-  // register services
+class GrpcServerBuilder(private val router: HttpRouter) {
   private val registry = ServiceRegistry()
+  private val interceptors = mutableListOf<GrpcInterceptor>()
 
-  init {
-    configureRegistry(registry)
+  fun service(service: ServerServiceDefinition): Unit = registry.addService(service)
+  fun service(service: BindableService): Unit = registry.addService(service)
+
+  fun interceptor(interceptor: GrpcInterceptor) {
+    interceptors.add(interceptor)
+  }
+
+  fun build() {
+    val interceptorChain = GrpcUtils.buildInterceptorChain(interceptors)
 
     for(service in registry.services()) {
       router.call(HttpMethod.POST, "/${service.serviceDescriptor.name}/:method") { req ->
@@ -42,34 +53,52 @@ class GrpcHandler(router: HttpRouter, configureRegistry: ServiceRegistry.() -> U
         val methodName = req.pathParams["method"] ?: throw IllegalArgumentException("method is not provided")
         val method = registry.lookupMethod("${service.serviceDescriptor.name}/${methodName}")
         if (method != null) {
-          val responseFlow = handleRequest(req, method)
-          val resp = response(responseFlow, contentType = Constants.contentTypeProto)
-          resp.trailers[Constants.grpcStatus] = Status.OK.code.value().toString()
-          resp
+          handleRequest(req, method, interceptorChain)
         } else {
-          val resp = response(flowOf(), contentType = Constants.contentTypeProto)
-          resp.trailers[Constants.grpcStatus] = Status.NOT_FOUND.code.value().toString()
-          resp
+          notFound()
         }
       }
     }
   }
 
-  private suspend fun <ReqT, RespT> handleRequest(request: HttpServerRequest, method: ServerMethodDefinition<ReqT, RespT>): Flow<Buffer> {
+  private fun notFound(): HttpServerResponse {
+    val resp = response(flowOf(), contentType = Constants.contentTypeGrpcProto)
+    resp.trailers[Constants.grpcStatus] = Status.NOT_FOUND.code.value().toString()
+    return resp
+  }
+
+  private suspend fun <REQ, RESP> handleRequest(request: HttpServerRequest, method: ServerMethodDefinition<REQ, RESP>,
+                                                  interceptors: GrpcInterceptor?): HttpServerResponse {
     verifyHeaders(request)
 
     val requestDeserializer = GrpcUtils.requestDeserializer(method.methodDescriptor)
-    val responseSerializer = GrpcUtils.responseSerializer(method.methodDescriptor)
+    val requestMessages = GrpcUtils.readMessages(request.body, requestDeserializer)
+    val grpcRequest = GrpcRequest(request.headers, requestMessages)
+    val grpcResponse = handleRequest(grpcRequest, method, interceptors)
 
-    val requests = GrpcUtils.readMessages(request.body, requestDeserializer)
-    val responses = method.callHandler.invoke(requests)
-    return responses.map { msg ->
+    val httpBody = grpcResponse.messages.map { msg ->
       val buf = GrpcUtils.serializeMessagePacket(msg)
       Buffer.buffer(buf)
     }
+    val response = response(body = httpBody, contentType = Constants.contentTypeGrpcProto)
+    response.trailers[Constants.grpcStatus] = Status.OK.code.value().toString()
+    response.headers.addAll(grpcResponse.metadata)
+    return response
+  }
+
+  private suspend fun <REQ, RESP> handleRequest(request: GrpcRequest, method: ServerMethodDefinition<REQ, RESP>,
+                                                  interceptors: GrpcInterceptor?): GrpcResponse {
+    val handler: suspend (GrpcRequest) -> GrpcResponse = { req ->
+      val responseMessages = method.callHandler.invoke(req.messages as Flow<REQ>)
+      GrpcResponse(MultiMap.caseInsensitiveMultiMap(), responseMessages)
+    }
+    return interceptors?.let { it(request, handler) } ?: handler(request)
   }
 
   private fun verifyHeaders(request: HttpServerRequest) {
+    require(request.headers[HttpHeaders.CONTENT_TYPE] == Constants.contentTypeGrpcProto) {
+      "Content-Type must be ${Constants.contentTypeGrpcProto}"
+    }
     // grpc headers
 //        val serviceName = call.request.headers["Service-Name"]
 //        val serviceName = call.request.headers["grpc-timeout"]

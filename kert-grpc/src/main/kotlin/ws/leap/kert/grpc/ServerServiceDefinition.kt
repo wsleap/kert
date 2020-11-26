@@ -15,7 +15,7 @@ interface BindableService {
 class ServerServiceMethodsBuilder {
   private val methods = mutableMapOf<String, ServerMethodDefinition<*, *>>()
 
-  fun <ReqT, RespT> addMethod(method: MethodDescriptor<ReqT, RespT>, callHandler: ServerCallHandler<ReqT, RespT>) {
+  fun <ReqT, RespT> addMethod(method: MethodDescriptor<ReqT, RespT>, callHandler: CallHandler<ReqT, RespT>) {
     methods[method.fullMethodName] = ServerMethodDefinition(method, callHandler)
   }
 

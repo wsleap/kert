@@ -21,11 +21,11 @@ class GrpcBasicSpec : FunSpec() {
   val logger = KotlinLogging.logger {}
   private val server = server(8081) {
     grpc {
-      addService(EchoServiceImpl())
+      service(EchoServiceImpl())
     }
   }
 
-  private val client = EchoGrpcKt.newStub(URL("http://localhost:8081"))
+  private val client = EchoGrpcKt.stub(URL("http://localhost:8081"))
 
   override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
     server.start()

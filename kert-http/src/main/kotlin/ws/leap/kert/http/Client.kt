@@ -1,8 +1,10 @@
 package ws.leap.kert.http
 
+import io.vertx.core.MultiMap
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpClientOptions
+import io.vertx.core.http.HttpHeaders
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpVersion
 import io.vertx.kotlin.coroutines.await
@@ -27,27 +29,37 @@ suspend fun VHttpClientRequest.write(body: Flow<Buffer>) {
 
 typealias HttpClientFilter = suspend (req: HttpClientRequest, next: suspend (HttpClientRequest) -> HttpClientResponse) -> HttpClientResponse
 
-class HttpClient internal constructor(private val underlying: VHttpClient, private val filters: HttpClientFilter? = null) {
+class Client internal constructor(private val underlying: VHttpClient, private val filters: HttpClientFilter? = null) {
   companion object {
-    fun create(baseAddress: URL): HttpClient {
+    fun create(baseAddress: URL): Client {
       val options = HttpClientOptions()
         .setDefaultHost(baseAddress.host)
         .setDefaultPort(baseAddress.port)
         .setProtocolVersion(HttpVersion.HTTP_2)
         .setSsl(false)
 
-      val vertxClient = Kettle.vertx.createHttpClient(options)
-      return HttpClient(vertxClient)
+      val vertxClient = Kert.vertx.createHttpClient(options)
+      return Client(vertxClient)
     }
   }
 
-  fun request(method: HttpMethod, path: String, body: Any? = null, contentLength: Long? = null): HttpClientRequest {
-    return when(body) {
+  fun request(method: HttpMethod, path: String, body: Any? = null, contentLength: Long? = null, headers: MultiMap? = null): HttpClientRequest {
+    val request = when(body) {
       null -> HttpClientRequest(method, path, flowOf(), contentLength)
       is Flow<*> -> HttpClientRequest(method, path, body.map { toBuffer(it!!) }, contentLength)
       is ByteArray, is Buffer, is String -> HttpClientRequest(method, path, flowOf(toBuffer(body)), contentLength)
       else -> throw IllegalArgumentException("Unsupported data type ${body.javaClass.name}")
     }
+
+    headers?.let { request.headers.addAll(it) }
+
+    return request
+  }
+
+  fun request(method: HttpMethod, path: String, configure: HttpClientRequest.() -> Unit): HttpClientRequest {
+    val req = HttpClientRequest(method, path, flowOf())
+    configure(req)
+    return req
   }
 
   fun toBuffer(data: Any): Buffer {
@@ -59,12 +71,14 @@ class HttpClient internal constructor(private val underlying: VHttpClient, priva
     }
   }
 
-  suspend fun get(path: String) = call(request(HttpMethod.GET, path))
-  suspend fun head(path: String) = call(request(HttpMethod.HEAD, path))
-  suspend fun put(path: String, body: Any, contentLength: Long? = null) = call(request(HttpMethod.PUT, path, body, contentLength))
-  suspend fun post(path: String, body: Any, contentLength: Long? = null) = call(request(HttpMethod.POST, path, body, contentLength))
-  suspend fun delete(path: String) = call(request(HttpMethod.DELETE, path))
-  suspend fun patch(path: String, body: Any, contentLength: Long? = null) = call(request(HttpMethod.PATCH, path, body, contentLength))
+  suspend fun get(path: String, headers: MultiMap? = null) = call(request(HttpMethod.GET, path, headers))
+  suspend fun head(path: String, headers: MultiMap? = null) = call(request(HttpMethod.HEAD, path, headers))
+  suspend fun put(path: String, body: Any, contentLength: Long? = null, headers: MultiMap? = null) = call(request(HttpMethod.PUT, path, body, contentLength, headers))
+  suspend fun post(path: String, body: Any, contentLength: Long? = null, headers: MultiMap? = null) = call(request(HttpMethod.POST, path, body, contentLength, headers))
+  suspend fun delete(path: String, headers: MultiMap? = null) = call(request(HttpMethod.DELETE, path, headers))
+  suspend fun patch(path: String, body: Any, contentLength: Long? = null, headers: MultiMap? = null) = call(request(HttpMethod.PATCH, path, body, contentLength, headers))
+
+  suspend fun post(path: String, configure: HttpClientRequest.() -> Unit) = call(request(HttpMethod.POST, path, configure))
 
   suspend fun call(request: HttpClientRequest): HttpClientResponse {
     return filters?.let { it(request, ::callHandler) } ?: callHandler(request)
@@ -133,7 +147,7 @@ class ClientBuilder(private val address: URL) {
     return current
   }
 
-  fun build(): HttpClient {
+  fun build(): Client {
     val options = HttpClientOptions()
       .setDefaultHost(address.host)
       .setDefaultPort(address.port)
@@ -141,13 +155,13 @@ class ClientBuilder(private val address: URL) {
       .setSsl(address.protocol == "https")
 
     val filter = constructFilterChain()
-    val vertxClient = Kettle.vertx.createHttpClient(options)
-    return HttpClient(vertxClient, filter)
+    val vertxClient = Kert.vertx.createHttpClient(options)
+    return Client(vertxClient, filter)
   }
 }
 
-fun client(address: URL, configureBuilder: ClientBuilder.() -> Unit): HttpClient {
+fun client(address: URL, configure: ClientBuilder.() -> Unit): Client {
   val builder = ClientBuilder(address)
-  configureBuilder(builder)
+  configure(builder)
   return builder.build()
 }

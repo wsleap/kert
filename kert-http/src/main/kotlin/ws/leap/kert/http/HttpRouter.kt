@@ -135,7 +135,7 @@ open class HttpRouter(internal val underlying: Router, private var filters: Http
   }
 
   fun router(path: String, exceptionHandler: CoroutineExceptionHandler? = null, configure: HttpRouter.() -> Unit): HttpRouter {
-    val vertxRouter = Router.router(Kettle.vertx)
+    val vertxRouter = Router.router(Kert.vertx)
     val router = HttpRouter(vertxRouter, filters, exceptionHandler ?: this.exceptionHandler)
     configure(router)
 

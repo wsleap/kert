@@ -61,18 +61,18 @@ class Server(private val port: Int, private val configureRouter: ServerBuilder.(
   suspend fun start() {
     if(deployId != null) return
 
-    val router = Router.router(Kettle.vertx)
+    val router = Router.router(Kert.vertx)
     val routerConfigurator = ServerBuilder(router)
     configureRouter(routerConfigurator)
 
     val desiredInstances = VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE
     val deploymentOptions = DeploymentOptions().setInstances(desiredInstances)
-    deployId = Kettle.vertx.deployVerticle({ ServerVerticle(port, router) }, deploymentOptions).await()
+    deployId = Kert.vertx.deployVerticle({ ServerVerticle(port, router) }, deploymentOptions).await()
   }
 
   suspend fun stop() {
     deployId?.let {
-      Kettle.vertx.undeploy(it).await()
+      Kert.vertx.undeploy(it).await()
       deployId = null
     }
   }

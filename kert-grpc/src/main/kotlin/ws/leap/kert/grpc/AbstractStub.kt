@@ -2,12 +2,13 @@ package ws.leap.kert.grpc
 
 import io.grpc.MethodDescriptor
 import io.grpc.Status
-import ws.leap.kert.http.HttpClient
 import io.vertx.core.buffer.Buffer
+import io.vertx.core.http.HttpHeaders
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import ws.leap.kert.http.Client
 
 // placeholder, nothing to configure right now
 class CallOptions {
@@ -15,26 +16,37 @@ class CallOptions {
 }
 
 abstract class AbstractStub<S>(
-  private val client: HttpClient,
-  protected val callOptions: CallOptions = CallOptions()
+  private val client: Client,
+  protected val callOptions: CallOptions = CallOptions(),
+  private val interceptors: GrpcInterceptor? = null
 ) {
-  protected fun <ReqT, RespT> newCall(method: MethodDescriptor<ReqT, RespT>,
+  protected fun <REQ, RESP> newCall(method: MethodDescriptor<REQ, RESP>,
                                       callOptions: CallOptions
-  ): ClientCallHandler<ReqT, RespT> {
-    return object : ClientCallHandler<ReqT, RespT> {
-      override suspend fun invoke(requests: Flow<ReqT>): Flow<RespT> {
-        val requestSerializer = GrpcUtils.requestSerializer(method)
+  ): CallHandler<REQ, RESP> {
+    return object : CallHandler<REQ, RESP> {
+      override suspend fun invoke(request: Flow<REQ>): Flow<RESP> {
+        val grpcRequest = GrpcRequest(emptyMetadata(), request)
+        val grpcResponse = interceptors?.let { it(grpcRequest, ::invokeHttp) }
+          ?: invokeHttp(grpcRequest)
+        return grpcResponse.messages as Flow<RESP>
+      }
+
+      private suspend fun invokeHttp(request: GrpcRequest): GrpcResponse {
         val responseDeserializer = GrpcUtils.responseDeserializer(method)
 
-        val httpRequestFlow = requests.map { msg ->
+        val httpRequestBody = request.messages.map { msg ->
           val buf = GrpcUtils.serializeMessagePacket(msg)
           Buffer.buffer(buf)
         }
 
-        val httpResponse = client.post("/${method.fullMethodName}", httpRequestFlow)
-        val responses = GrpcUtils.readMessages(httpResponse.body, responseDeserializer)
-        return flow {
-          responses.collect { msg ->
+        val httpResponse = client.post("/${method.fullMethodName}") {
+          headers.addAll(request.metadata)
+          headers[HttpHeaders.CONTENT_TYPE] = Constants.contentTypeGrpcProto
+          body = httpRequestBody
+        }
+        val responseMessages = GrpcUtils.readMessages(httpResponse.body, responseDeserializer)
+        val responseMessagesFlow = flow {
+          responseMessages.collect { msg ->
             emit(msg)
           }
 
@@ -45,17 +57,19 @@ abstract class AbstractStub<S>(
             throw status.withDescription(httpResponse.trailers[Constants.grpcMessage] ?: "").asException()
           }
         }
+
+        return GrpcResponse(httpResponse.headers, responseMessagesFlow)
       }
     }
   }
 
-  /**
-   * Use an existing HttpClient to make calls, with provided [address] as base URL of the service.
-   */
-  // protected abstract fun build(client: HttpClient, address: URL, callOptions: CallOptions): S
+  fun withInterceptors(interceptors: List<GrpcInterceptor>): S {
+    val interceptorChain = GrpcUtils.buildInterceptorChain(interceptors)
+    return build(client, callOptions, interceptorChain)
+  }
 
   /**
-   * Create a HttpClient with [address] as base URL, and use it for calls.
+   * Create a new stub.
    */
-  // protected abstract fun build(address: URL, callOptions: CallOptions): S
+  protected abstract fun build(client: Client, callOptions: CallOptions = CallOptions(), interceptors: GrpcInterceptor? = null): S
 }

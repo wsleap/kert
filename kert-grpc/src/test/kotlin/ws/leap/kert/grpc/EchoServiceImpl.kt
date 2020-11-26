@@ -99,7 +99,7 @@ Latency distribution:
 fun main() = runBlocking {
   val server = server(8888) {
     grpc {
-      addService(EchoServiceImpl())
+      service(EchoServiceImpl())
     }
   }
   server.start()

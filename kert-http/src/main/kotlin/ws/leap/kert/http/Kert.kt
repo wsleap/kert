@@ -3,7 +3,7 @@ package ws.leap.kert.http
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 
-object Kettle {
+internal object Kert {
   internal val vertx by lazy {
     val options = VertxOptions()
       .setEventLoopPoolSize(VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE)

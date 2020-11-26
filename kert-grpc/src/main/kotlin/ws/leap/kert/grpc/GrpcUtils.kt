@@ -3,6 +3,7 @@ package ws.leap.kert.grpc
 import com.google.protobuf.AbstractMessage
 import io.grpc.MethodDescriptor
 import io.netty.buffer.*
+import io.vertx.core.MultiMap
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.streams.ReadStream
 import io.vertx.core.streams.WriteStream
@@ -102,4 +103,18 @@ object GrpcUtils {
       method.parseResponse(inStream)
     }
   }
+
+  fun buildInterceptorChain(interceptors: List<GrpcInterceptor>): GrpcInterceptor? {
+    var interceptorChain: GrpcInterceptor? = null
+    interceptors.map { interceptor ->
+      interceptorChain = interceptorChain?.let { current ->
+        { req, next ->
+          current(req) { interceptor(it, next) }
+        }
+      } ?: interceptor
+    }
+    return interceptorChain
+  }
 }
+
+fun emptyMetadata(): MultiMap = MultiMap.caseInsensitiveMultiMap()

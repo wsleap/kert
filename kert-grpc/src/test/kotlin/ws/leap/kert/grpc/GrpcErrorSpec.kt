@@ -71,11 +71,11 @@ class GrpcErrorSpec : FunSpec() {
           }
         }
       }
-      addService(echoService)
+      service(echoService)
     }
   }
 
-  private val client = EchoGrpcKt.newStub(URL("http://localhost:8081"))
+  private val client = EchoGrpcKt.stub(URL("http://localhost:8081"))
 
   override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
     server.start()

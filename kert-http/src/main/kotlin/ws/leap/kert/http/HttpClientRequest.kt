@@ -7,7 +7,7 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.impl.headers.HeadersMultiMap
 import kotlinx.coroutines.flow.Flow
 
-class HttpClientRequest internal constructor(val method: HttpMethod, val path: String, val body: Flow<Buffer>, contentLength: Long? = null) {
+class HttpClientRequest internal constructor(val method: HttpMethod, val path: String, var body: Flow<Buffer>, contentLength: Long? = null) {
   val headers: MultiMap = HeadersMultiMap()
   var chunked: Boolean = false
 

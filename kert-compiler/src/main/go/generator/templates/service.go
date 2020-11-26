@@ -10,11 +10,13 @@ import kotlinx.coroutines.flow.Flow
 import io.grpc.MethodDescriptor.generateFullMethodName
 import ws.leap.kert.grpc.ClientCalls
 import ws.leap.kert.grpc.ServerCalls
-import ws.leap.kert.http.HttpClient
+import ws.leap.kert.http.Client
 import ws.leap.kert.grpc.CallOptions
 import ws.leap.kert.grpc.AbstractStub
 import ws.leap.kert.grpc.BindableService
 import ws.leap.kert.grpc.ServerServiceDefinition
+import ws.leap.kert.grpc.GrpcInterceptor
+import ws.leap.kert.grpc.GrpcUtils
 
 {{/**
  * <pre>
@@ -40,19 +42,19 @@ object {{$s.Name}}GrpcKt {
   {{- end}}
 
   /**
-   * Creates a new RX stub
+   * Creates a new stub with Client
    */
-  fun newStub(address: URL): {{.Name}}Stub {
-    val client = HttpClient.create(address)
-    return {{.Name}}Stub(client)
+  fun stub(client: Client, callOptions: CallOptions = CallOptions(), interceptors: List<GrpcInterceptor> = emptyList()): {{.Name}}Stub {
+    val interceptorChain = GrpcUtils.buildInterceptorChain(interceptors)
+    return {{.Name}}Stub(client, callOptions, interceptorChain)
   }
 
   /**
-   * Creates a new RX stub with call options
+   * Creates a new stub
    */
-  fun newStub(address: URL, callOptions: CallOptions): {{.Name}}Stub {
-    val client = HttpClient.create(address)
-    return {{.Name}}Stub(client, callOptions)
+  fun stub(address: URL, callOptions: CallOptions = CallOptions(), interceptors: List<GrpcInterceptor> = emptyList()): {{.Name}}Stub {
+    val client = Client.create(address)
+    return stub(client, callOptions, interceptors)
   }
 
   {{/**
@@ -103,8 +105,8 @@ object {{$s.Name}}GrpcKt {
    * Test service that supports all call types.
    * </pre>
    */}}
-  class {{$s.Name}}Stub internal constructor(client: HttpClient, callOptions: CallOptions = CallOptions())
-    : AbstractStub<{{$s.Name}}Stub>(client, callOptions), {{$s.Name}} {
+  class {{$s.Name}}Stub internal constructor(client: Client, callOptions: CallOptions, interceptors: GrpcInterceptor?)
+    : AbstractStub<{{$s.Name}}Stub>(client, callOptions, interceptors), {{$s.Name}} {
     {{range $i, $m := .Methods}}
     {{- /**
      * <pre>
@@ -117,6 +119,10 @@ object {{$s.Name}}GrpcKt {
         newCall({{$m.FieldName}}, callOptions), {{$m.CallParams}})
     }
     {{end}}
+
+    override fun build(client: Client, callOptions: CallOptions, interceptors: GrpcInterceptor?): {{$s.Name}}Stub {
+      return {{.Name}}Stub(client, callOptions, interceptors)
+    }
   }
 
   private class {{$s.Name}}DescriptorSupplier : io.grpc.protobuf.ProtoFileDescriptorSupplier {

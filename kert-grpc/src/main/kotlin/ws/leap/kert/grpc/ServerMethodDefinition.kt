@@ -2,9 +2,9 @@ package ws.leap.kert.grpc
 
 import io.grpc.MethodDescriptor
 
-class ServerMethodDefinition<ReqT, RespT>(
+class ServerMethodDefinition<REQ, RESP>(
   /** The `MethodDescriptor` for this method.  */
-  val methodDescriptor: MethodDescriptor<ReqT, RespT>,
+  val methodDescriptor: MethodDescriptor<REQ, RESP>,
   /** Handler for incoming calls.  */
-  val callHandler: ServerCallHandler<ReqT, RespT>
+  val callHandler: CallHandler<REQ, RESP>
 )

@@ -15,7 +15,7 @@ object ServerCalls {
    *
    * @param method an adaptor to the actual method on the service implementation.
    */
-  fun <REQ, RESP> unaryCall(method: suspend (REQ) -> RESP): ServerCallHandler<REQ, RESP> {
+  fun <REQ, RESP> unaryCall(method: suspend (REQ) -> RESP): CallHandler<REQ, RESP> {
     return object: ServerCallHandler<REQ, RESP> {
       override suspend fun invoke(requests: Flow<REQ>): Flow<RESP> {
         val req = requests.single()
