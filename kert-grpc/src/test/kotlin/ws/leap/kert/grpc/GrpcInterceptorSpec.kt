@@ -23,7 +23,7 @@ class GrpcInterceptorSpec : FunSpec() {
         if (req.metadata["authentication"] == null) throw IllegalArgumentException("Authentication header is missing")
 
         // fail if message value is "not-good"
-        val filteredReq = req.copy(req.metadata, req.messages.map { msg ->
+        val filteredReq = req.copy(messages = req.messages.map { msg ->
           if (msg is EchoReq && msg.value == "not-good") throw IllegalArgumentException("Mocked exception")
           msg
         })

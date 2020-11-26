@@ -10,20 +10,31 @@ Compare to the official [gRPC-Java](https://github.com/grpc/grpc-java), Kert pro
 Server Example:
 ```kotlin
 val server = server(8080) {
+  // http service
   http {
+    // http filter
     filter { request, next ->
       println("Serving request ${request.path}")
       next(req)
     }
+    // http request handler
     get("/ping") {
       response("pong")
     }
   }
+  // grpc service
   grpc {
-    interceptor { requests, next ->
-      next(requests)
+    // grpc interceptor
+    interceptor { request, next ->
+      // intercept the request
+      if (req.metadata["authentication"] == null) throw IllegalArgumentException("Authentication header is missing")
+
+      // intercept each message in the streaming request
+      val filteredReq = req.copy(messages = req.messages.map { msg -> ... })
+      next(filteredReq)
     }
-    addService(EchoServiceImpl())
+    // register service implementation
+    service(EchoServiceImpl())
   }
 }
 server.start()
@@ -31,5 +42,11 @@ server.start()
 
 Client Example:
 ```kotlin
+// http request
+val client = client(URL("http://localhost:8080")) {}
+client.get("ping")
 
+// grpc request
+val stub = EchoGrpcKt.stub(URL("http://localhost:8080"))
+stub.unary(EchoReq.newBuilder().setId(1).setValue("hello").build())
 ```
