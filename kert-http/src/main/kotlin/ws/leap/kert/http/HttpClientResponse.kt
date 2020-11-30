@@ -3,6 +3,7 @@ package ws.leap.kert.http
 import io.vertx.core.Context
 import io.vertx.core.MultiMap
 import io.vertx.core.buffer.Buffer
+import io.vertx.kotlin.coroutines.await
 import io.vertx.kotlin.coroutines.toChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow

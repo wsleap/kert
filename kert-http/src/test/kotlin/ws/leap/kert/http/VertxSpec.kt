@@ -4,6 +4,7 @@ import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.FunSpec
 import io.vertx.core.*
 import io.vertx.core.http.*
+import io.vertx.core.http.HttpServer
 import io.vertx.core.streams.Pump
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.await
@@ -72,7 +73,7 @@ fun main() {
     }
 
     override fun start() {
-      server.listen(8080)
+      server.listen(8550)
     }
 
     override fun stop() {
@@ -91,7 +92,7 @@ class VertxSpec : FunSpec() {
   private val client = run {
     val options = HttpClientOptions()
       .setDefaultHost("localhost")
-      .setDefaultPort(8888)
+      .setDefaultPort(8550)
       .setProtocolVersion(HttpVersion.HTTP_2)
       .setMaxChunkSize(16 * 1024)
       .setInitialSettings(Http2Settings().setMaxFrameSize(16 * 1024))
@@ -103,7 +104,7 @@ class VertxSpec : FunSpec() {
 
   override fun beforeSpec(spec: Spec) {
     runBlocking {
-      server.listen(8888).await()
+      server.listen(8550).await()
     }
   }
 

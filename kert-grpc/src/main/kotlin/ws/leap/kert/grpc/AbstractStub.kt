@@ -4,11 +4,9 @@ import io.grpc.MethodDescriptor
 import io.grpc.Status
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpHeaders
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import ws.leap.kert.http.Client
+import kotlinx.coroutines.flow.*
+import ws.leap.kert.core.combine
+import ws.leap.kert.http.HttpClient
 
 // placeholder, nothing to configure right now
 class CallOptions {
@@ -16,60 +14,73 @@ class CallOptions {
 }
 
 abstract class AbstractStub<S>(
-  private val client: Client,
+  private val client: HttpClient,
   protected val callOptions: CallOptions = CallOptions(),
   private val interceptors: GrpcInterceptor? = null
 ) {
   protected fun <REQ, RESP> newCall(method: MethodDescriptor<REQ, RESP>,
-                                      callOptions: CallOptions
-  ): CallHandler<REQ, RESP> {
-    return object : CallHandler<REQ, RESP> {
-      override suspend fun invoke(request: Flow<REQ>): Flow<RESP> {
-        val grpcRequest = GrpcRequest(emptyMetadata(), request)
-        val grpcResponse = interceptors?.let { it(grpcRequest, ::invokeHttp) }
-          ?: invokeHttp(grpcRequest)
-        return grpcResponse.messages as Flow<RESP>
+                                    callOptions: CallOptions): GrpcClientCallHandler<REQ, RESP> {
+    return { requestMessages ->
+      val handler: GrpcHandler<REQ, RESP> = { req ->
+        invokeHttp(method, req)
       }
-
-      private suspend fun invokeHttp(request: GrpcRequest): GrpcResponse {
-        val responseDeserializer = GrpcUtils.responseDeserializer(method)
-
-        val httpRequestBody = request.messages.map { msg ->
-          val buf = GrpcUtils.serializeMessagePacket(msg)
-          Buffer.buffer(buf)
-        }
-
-        val httpResponse = client.post("/${method.fullMethodName}") {
-          headers.addAll(request.metadata)
-          headers[HttpHeaders.CONTENT_TYPE] = Constants.contentTypeGrpcProto
-          body = httpRequestBody
-        }
-        val responseMessages = GrpcUtils.readMessages(httpResponse.body, responseDeserializer)
-        val responseMessagesFlow = flow {
-          responseMessages.collect { msg ->
-            emit(msg)
-          }
-
-          // fail the flow if trailer is missing or not OK
-          val statusCode = httpResponse.trailers[Constants.grpcStatus]?.toInt() ?: throw IllegalStateException("GRPC status is missing")
-          val status = Status.fromCodeValue(statusCode)
-          if (!status.isOk) {
-            throw status.withDescription(httpResponse.trailers[Constants.grpcMessage] ?: "").asException()
-          }
-        }
-
-        return GrpcResponse(httpResponse.headers, responseMessagesFlow)
-      }
+      val grpcRequest = GrpcRequest<REQ>(method, emptyMetadata(), requestMessages)
+      val grpcResponse = interceptors?.let { it(grpcRequest, handler as GrpcHandler<*, *>) }
+        ?: handler(grpcRequest)
+      grpcResponse.messages as Flow<RESP>
     }
   }
 
-  fun withInterceptors(interceptors: List<GrpcInterceptor>): S {
-    val interceptorChain = GrpcUtils.buildInterceptorChain(interceptors)
-    return build(client, callOptions, interceptorChain)
+  private suspend fun <REQ, RESP>  invokeHttp(method: MethodDescriptor<REQ, RESP>, request: GrpcRequest<REQ>): GrpcResponse<RESP> {
+    val responseDeserializer = GrpcUtils.responseDeserializer(method)
+
+    val httpRequestBody = request.messages.map { msg ->
+      val buf = GrpcUtils.serializeMessagePacket(msg)
+      Buffer.buffer(buf)
+    }
+
+    val httpRequestPath = "/${method.fullMethodName}"
+    val httpResponse = client.post(httpRequestPath) {
+      headers.addAll(request.metadata)
+      headers[HttpHeaders.CONTENT_TYPE] = Constants.contentTypeGrpcProto
+      body = httpRequestBody
+    }
+
+    if (httpResponse.statusCode != 200) {
+      throw IllegalStateException("GRPC call failed, status=${httpResponse.statusCode}")
+    }
+
+    val responseMessages = GrpcUtils.readMessages(httpResponse.body, responseDeserializer)
+    val responseMessagesFlow = responseMessages.onCompletion { cause ->
+      if (cause == null) {
+        val trailers = httpResponse.trailers
+        // fail the flow if trailer is missing or not OK
+        val statusCode = trailers[Constants.grpcStatus]?.toInt()
+          ?: throw IllegalStateException("GRPC status is missing, request=$httpRequestPath")
+        val status = Status.fromCodeValue(statusCode)
+        if (!status.isOk) {
+          throw status.withDescription(trailers[Constants.grpcMessage] ?: "").asException()
+        }
+      }
+    }
+
+    return GrpcResponse(method, httpResponse.headers, responseMessagesFlow)
+  }
+
+  fun intercepted(vararg interceptors: GrpcInterceptor): S {
+    if (interceptors.isEmpty()) return this as S
+
+    val combinedInterceptor = combine(*interceptors)!!
+    return intercepted(combinedInterceptor)
+  }
+
+  fun intercepted(interceptor: GrpcInterceptor): S {
+    // TODO inherit current interceptors or not??
+    return build(client, callOptions, combine(interceptors, interceptor))
   }
 
   /**
    * Create a new stub.
    */
-  protected abstract fun build(client: Client, callOptions: CallOptions = CallOptions(), interceptors: GrpcInterceptor? = null): S
+  protected abstract fun build(client: HttpClient, callOptions: CallOptions = CallOptions(), interceptors: GrpcInterceptor? = null): S
 }

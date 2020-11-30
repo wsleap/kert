@@ -3,10 +3,10 @@ package ws.leap.kert.rest
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.vertx.core.http.HttpMethod
 import ws.leap.kert.http.HttpRouter
-import ws.leap.kert.http.ServerBuilder
+import ws.leap.kert.http.HttpServerBuilder
 import ws.leap.kert.http.response
 
-fun ServerBuilder.rest(mapper: ObjectMapper, configure: RestRouter.() -> Unit) {
+fun HttpServerBuilder.rest(mapper: ObjectMapper, configure: RestRouter.() -> Unit) {
   val router = RestRouter(mapper, http())
   configure(router)
 }

@@ -5,10 +5,8 @@ import io.grpc.MethodDescriptor
 import io.netty.buffer.*
 import io.vertx.core.MultiMap
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.streams.ReadStream
 import io.vertx.core.streams.WriteStream
 import kotlinx.coroutines.flow.*
-import java.io.ByteArrayInputStream
 
 object GrpcUtils {
   suspend fun <T> writeMessages(stream: WriteStream<Buffer>, messages: Flow<T>, serializer: (T) -> ByteBuf) {
@@ -102,18 +100,6 @@ object GrpcUtils {
       val inStream = ByteBufInputStream(buf, size)
       method.parseResponse(inStream)
     }
-  }
-
-  fun buildInterceptorChain(interceptors: List<GrpcInterceptor>): GrpcInterceptor? {
-    var interceptorChain: GrpcInterceptor? = null
-    interceptors.map { interceptor ->
-      interceptorChain = interceptorChain?.let { current ->
-        { req, next ->
-          current(req) { interceptor(it, next) }
-        }
-      } ?: interceptor
-    }
-    return interceptorChain
   }
 }
 

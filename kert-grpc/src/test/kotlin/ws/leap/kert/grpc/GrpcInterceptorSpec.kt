@@ -16,7 +16,7 @@ import java.net.URL
 
 class GrpcInterceptorSpec : FunSpec() {
   val logger = KotlinLogging.logger {}
-  private val server = server(8081) {
+  private val server = server(8551) {
     grpc {
       interceptor { req, next ->
         // fail if no authentication header
@@ -33,16 +33,14 @@ class GrpcInterceptorSpec : FunSpec() {
       service(EchoServiceImpl())
     }
   }
-  override fun beforeSpec(spec: Spec) = runBlocking<Unit> { server.start() }
+  override fun beforeSpec(spec: Spec) = runBlocking { server.start() }
   override fun afterSpec(spec: Spec) = runBlocking { server.stop() }
 
-  private val client = EchoGrpcKt.stub(URL("http://localhost:8081"))
-  private val clientWithAuth = client.withInterceptors(
-    listOf { req, next ->
+  private val client = EchoGrpcKt.stub(URL("http://localhost:8551"))
+  private val clientWithAuth = client.intercepted { req, next ->
       req.metadata["authentication"] = "mocked-authentication"
       next(req)
     }
-  )
 
   init {
     test("should fail if no authentication") {

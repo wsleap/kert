@@ -11,9 +11,9 @@ object ClientCalls {
    * Executes a unary call with a response.
    */
   suspend fun <REQ, RESP> unaryCall(
-    call: ClientCallHandler<REQ, RESP>,
+    call: GrpcClientCallHandler<REQ, RESP>,
     req: REQ): RESP {
-    val responses = call.invoke(flowOf(req))
+    val responses = call(flowOf(req))
     return responses.single()
   }
 
@@ -21,9 +21,9 @@ object ClientCalls {
    * Executes a server-streaming call with a response [Flow].
    */
   suspend fun <REQ, RESP> serverStreamingCall(
-    call: ClientCallHandler<REQ, RESP>,
+    call: GrpcClientCallHandler<REQ, RESP>,
     req: REQ): Flow<RESP> {
-    return call.invoke(flowOf(req))
+    return call(flowOf(req))
   }
 
   /**
@@ -32,10 +32,10 @@ object ClientCalls {
    * @return requestMore stream observer.
    */
   suspend fun <REQ, RESP> clientStreamingCall(
-    call: ClientCallHandler<REQ, RESP>,
+    call: GrpcClientCallHandler<REQ, RESP>,
     req: Flow<REQ>
   ): RESP {
-    val responses = call.invoke(req)
+    val responses = call(req)
     return responses.single()
   }
 
@@ -45,8 +45,8 @@ object ClientCalls {
    * @return requestMore stream observer.
    */
   suspend fun <REQ, RESP> bidiStreamingCall(
-    call: ClientCallHandler<REQ, RESP>,
+    call: GrpcClientCallHandler<REQ, RESP>,
     req: Flow<REQ>): Flow<RESP> {
-    return call.invoke(req)
+    return call(req)
   }
 }

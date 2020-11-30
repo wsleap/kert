@@ -4,7 +4,6 @@ import io.vertx.core.MultiMap
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpClientOptions
-import io.vertx.core.http.HttpHeaders
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpVersion
 import io.vertx.kotlin.coroutines.await
@@ -16,6 +15,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import ws.leap.kert.core.combine
+import ws.leap.kert.core.handle
 import java.net.URL
 import kotlin.coroutines.coroutineContext
 import io.vertx.core.http.HttpClient as VHttpClient
@@ -27,11 +28,9 @@ suspend fun VHttpClientRequest.write(body: Flow<Buffer>) {
   }
 }
 
-typealias HttpClientFilter = suspend (req: HttpClientRequest, next: suspend (HttpClientRequest) -> HttpClientResponse) -> HttpClientResponse
-
-class Client internal constructor(private val underlying: VHttpClient, private val filters: HttpClientFilter? = null) {
+class HttpClient internal constructor(private val underlying: VHttpClient, private val filters: HttpClientFilter? = null) {
   companion object {
-    fun create(baseAddress: URL): Client {
+    fun create(baseAddress: URL): HttpClient {
       val options = HttpClientOptions()
         .setDefaultHost(baseAddress.host)
         .setDefaultPort(baseAddress.port)
@@ -39,7 +38,7 @@ class Client internal constructor(private val underlying: VHttpClient, private v
         .setSsl(false)
 
       val vertxClient = Kert.vertx.createHttpClient(options)
-      return Client(vertxClient)
+      return HttpClient(vertxClient)
     }
   }
 
@@ -81,10 +80,26 @@ class Client internal constructor(private val underlying: VHttpClient, private v
   suspend fun post(path: String, configure: HttpClientRequest.() -> Unit) = call(request(HttpMethod.POST, path, configure))
 
   suspend fun call(request: HttpClientRequest): HttpClientResponse {
-    return filters?.let { it(request, ::callHandler) } ?: callHandler(request)
+    return handle(request, ::callHttp, filters)
   }
 
-  private suspend fun callHandler(request: HttpClientRequest): HttpClientResponse {
+  suspend fun close() {
+    underlying.close().await()
+  }
+
+  fun filtered(filter: HttpClientFilter): HttpClient {
+    // TODO inherit current filters or not??
+    return HttpClient(underlying, combine(filters, filter))
+  }
+
+  fun filtered(vararg filters: HttpClientFilter): HttpClient {
+    if(filters.isEmpty()) return this
+
+    val combinedFilter = combine(*filters)!!
+    return filtered(combinedFilter)
+  }
+
+  private suspend fun callHttp(request: HttpClientRequest): HttpClientResponse {
     val responseDeferred = CompletableDeferred<HttpClientResponse>()
     val scope = CoroutineScope(coroutineContext)
 
@@ -134,34 +149,21 @@ class ClientBuilder(private val address: URL) {
     filters.add(filter)
   }
 
-  private fun constructFilterChain(): HttpClientFilter? {
-    var current: HttpClientFilter? = null
-    for(filter in filters) {
-      current = current?.let {
-        { req, next ->
-          it(req) { filter(it, next) }
-        }
-      } ?: filter
-    }
-
-    return current
-  }
-
-  fun build(): Client {
+  fun build(): HttpClient {
     val options = HttpClientOptions()
       .setDefaultHost(address.host)
       .setDefaultPort(address.port)
       .setProtocolVersion(protocolVersion)
       .setSsl(address.protocol == "https")
 
-    val filter = constructFilterChain()
+    val filter = combine(*filters.toTypedArray())
     val vertxClient = Kert.vertx.createHttpClient(options)
-    return Client(vertxClient, filter)
+    return HttpClient(vertxClient, filter)
   }
 }
 
-fun client(address: URL, configure: ClientBuilder.() -> Unit): Client {
+fun client(address: URL, configure: (ClientBuilder.() -> Unit)? = null): HttpClient {
   val builder = ClientBuilder(address)
-  configure(builder)
+  configure?.let { it(builder) }
   return builder.build()
 }

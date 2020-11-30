@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import ws.leap.kert.core.Filter
+import ws.leap.kert.core.Handler
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import io.vertx.core.http.HttpServerResponse as VHttpServerResponse
@@ -74,11 +76,11 @@ open class HttpRouter(internal val underlying: Router, private var filters: Http
     } ?: filter
   }
 
-  private suspend fun callHandler(request: HttpServerRequest, handler: suspend (HttpServerRequest) -> HttpServerResponse): HttpServerResponse {
+  private suspend fun callHandler(request: HttpServerRequest, handler: HttpServerHandler): HttpServerResponse {
     return filters?.let { it(request, handler) } ?: handler(request)
   }
 
-  fun call(method: HttpMethod, path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+  fun call(method: HttpMethod, path: String, handler: HttpServerHandler) {
     underlying.route(method, path).handler { routingContext ->
       val request = HttpServerRequest(routingContext.request(), routingContext)
 
@@ -106,31 +108,31 @@ open class HttpRouter(internal val underlying: Router, private var filters: Http
     }
   }
 
-  fun get(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+  fun get(path: String, handler: HttpServerHandler) {
     call(HttpMethod.GET, path, handler)
   }
 
-  fun head(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+  fun head(path: String, handler: HttpServerHandler) {
     call(HttpMethod.HEAD, path, handler)
   }
 
-  fun post(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+  fun post(path: String, handler: HttpServerHandler) {
     call(HttpMethod.POST, path, handler)
   }
 
-  fun put(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+  fun put(path: String, handler: HttpServerHandler) {
     call(HttpMethod.PUT, path, handler)
   }
 
-  fun delete(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+  fun delete(path: String, handler: HttpServerHandler) {
     call(HttpMethod.DELETE, path, handler)
   }
 
-  fun patch(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+  fun patch(path: String, handler: HttpServerHandler) {
     call(HttpMethod.PATCH, path, handler)
   }
 
-  fun options(path: String, handler: suspend (HttpServerRequest) -> HttpServerResponse) {
+  fun options(path: String, handler: HttpServerHandler) {
     call(HttpMethod.OPTIONS, path, handler)
   }
 
@@ -143,3 +145,5 @@ open class HttpRouter(internal val underlying: Router, private var filters: Http
     return router
   }
 }
+
+

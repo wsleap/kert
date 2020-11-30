@@ -8,9 +8,10 @@ package {{$s.JavaPackage}}
 import java.net.URL
 import kotlinx.coroutines.flow.Flow
 import io.grpc.MethodDescriptor.generateFullMethodName
+import ws.leap.kert.core.combine
 import ws.leap.kert.grpc.ClientCalls
 import ws.leap.kert.grpc.ServerCalls
-import ws.leap.kert.http.Client
+import ws.leap.kert.http.HttpClient
 import ws.leap.kert.grpc.CallOptions
 import ws.leap.kert.grpc.AbstractStub
 import ws.leap.kert.grpc.BindableService
@@ -44,16 +45,16 @@ object {{$s.Name}}GrpcKt {
   /**
    * Creates a new stub with Client
    */
-  fun stub(client: Client, callOptions: CallOptions = CallOptions(), interceptors: List<GrpcInterceptor> = emptyList()): {{.Name}}Stub {
-    val interceptorChain = GrpcUtils.buildInterceptorChain(interceptors)
-    return {{.Name}}Stub(client, callOptions, interceptorChain)
+  fun stub(client: HttpClient, callOptions: CallOptions = CallOptions(), interceptors: List<GrpcInterceptor> = emptyList()): {{.Name}}Stub {
+    val combinedInterceptor = combine(*interceptors.toTypedArray())
+    return {{.Name}}Stub(client, callOptions, combinedInterceptor)
   }
 
   /**
    * Creates a new stub
    */
   fun stub(address: URL, callOptions: CallOptions = CallOptions(), interceptors: List<GrpcInterceptor> = emptyList()): {{.Name}}Stub {
-    val client = Client.create(address)
+    val client = HttpClient.create(address)
     return stub(client, callOptions, interceptors)
   }
 
@@ -105,7 +106,7 @@ object {{$s.Name}}GrpcKt {
    * Test service that supports all call types.
    * </pre>
    */}}
-  class {{$s.Name}}Stub internal constructor(client: Client, callOptions: CallOptions, interceptors: GrpcInterceptor?)
+  class {{$s.Name}}Stub internal constructor(client: HttpClient, callOptions: CallOptions, interceptors: GrpcInterceptor?)
     : AbstractStub<{{$s.Name}}Stub>(client, callOptions, interceptors), {{$s.Name}} {
     {{range $i, $m := .Methods}}
     {{- /**
@@ -120,7 +121,7 @@ object {{$s.Name}}GrpcKt {
     }
     {{end}}
 
-    override fun build(client: Client, callOptions: CallOptions, interceptors: GrpcInterceptor?): {{$s.Name}}Stub {
+    override fun build(client: HttpClient, callOptions: CallOptions, interceptors: GrpcInterceptor?): {{$s.Name}}Stub {
       return {{.Name}}Stub(client, callOptions, interceptors)
     }
   }

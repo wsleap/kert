@@ -6,10 +6,9 @@ import io.vertx.core.http.HttpServerOptions
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.await
 import kotlinx.coroutines.CoroutineExceptionHandler
+import ws.leap.kert.core.Filter
 
-typealias HttpServerFilter = suspend (req: HttpServerRequest, next: suspend (HttpServerRequest) -> HttpServerResponse) -> HttpServerResponse
-
-class ServerBuilder(private val router: Router) {
+class HttpServerBuilder(private val router: Router) {
   fun http(exceptionHandler: CoroutineExceptionHandler? = null): HttpRouter {
     return HttpRouter(router, null, exceptionHandler)
   }
@@ -55,14 +54,14 @@ internal class ServerVerticle(private val port: Int, private val router: Router)
   }
 }
 
-class Server(private val port: Int, private val configureRouter: ServerBuilder.() -> Unit) {
+class HttpServer(private val port: Int, private val configureRouter: HttpServerBuilder.() -> Unit) {
   private var deployId: String? = null
 
   suspend fun start() {
     if(deployId != null) return
 
     val router = Router.router(Kert.vertx)
-    val routerConfigurator = ServerBuilder(router)
+    val routerConfigurator = HttpServerBuilder(router)
     configureRouter(routerConfigurator)
 
     val desiredInstances = VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE
@@ -78,6 +77,6 @@ class Server(private val port: Int, private val configureRouter: ServerBuilder.(
   }
 }
 
-fun server(port: Int, configureRouter: ServerBuilder.() -> Unit): Server {
-  return Server(port, configureRouter)
+fun server(port: Int, configureRouter: HttpServerBuilder.() -> Unit): ws.leap.kert.http.HttpServer {
+  return HttpServer(port, configureRouter)
 }

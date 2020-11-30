@@ -5,7 +5,7 @@ import io.grpc.Status
 import kotlinx.coroutines.flow.*
 
 /**
- * Utility functions for adapting [ServerCallHandler]s to application service implementation,
+ * Utility functions for adapting [GrpcServerCallHandler]s to application service implementation,
  * meant to be used by the generated code.
  */
 object ServerCalls {
@@ -15,12 +15,10 @@ object ServerCalls {
    *
    * @param method an adaptor to the actual method on the service implementation.
    */
-  fun <REQ, RESP> unaryCall(method: suspend (REQ) -> RESP): CallHandler<REQ, RESP> {
-    return object: ServerCallHandler<REQ, RESP> {
-      override suspend fun invoke(requests: Flow<REQ>): Flow<RESP> {
-        val req = requests.single()
-        return flowOf(method(req))
-      }
+  fun <REQ, RESP> unaryCall(method: suspend (REQ) -> RESP): GrpcServerHandler<REQ, RESP> {
+    return { req ->
+      val msg = req.messages.single() as REQ
+      GrpcResponse(req.method, emptyMetadata(), flowOf(method(msg)))
     }
   }
 
@@ -29,12 +27,10 @@ object ServerCalls {
    *
    * @param method an adaptor to the actual method on the service implementation.
    */
-  fun <REQ, RESP> serverStreamingCall(method: suspend (REQ) -> Flow<RESP>): ServerCallHandler<REQ, RESP> {
-    return object: ServerCallHandler<REQ, RESP> {
-      override suspend fun invoke(requests: Flow<REQ>): Flow<RESP> {
-        val req = requests.single()
-        return method(req)
-      }
+  fun <REQ, RESP> serverStreamingCall(method: suspend (REQ) -> Flow<RESP>): GrpcServerHandler<REQ, RESP> {
+    return { req ->
+      val msg = req.messages.single() as REQ
+      GrpcResponse(req.method, emptyMetadata(), method(msg))
     }
   }
 
@@ -43,20 +39,17 @@ object ServerCalls {
    *
    * @param method an adaptor to the actual method on the service implementation.
    */
-  fun <REQ, RESP> clientStreamingCall(method: suspend(Flow<REQ>) -> RESP): ServerCallHandler<REQ, RESP> {
-    return object: ServerCallHandler<REQ, RESP> {
-      override suspend fun invoke(requests: Flow<REQ>): Flow<RESP> {
-        val resp = method(requests)
-        return flowOf(resp)
-      }
+  fun <REQ, RESP> clientStreamingCall(method: suspend(Flow<REQ>) -> RESP): GrpcServerHandler<REQ, RESP> {
+    return { req ->
+      val resp = method(req.messages as Flow<REQ>)
+      GrpcResponse(req.method, emptyMetadata(), flowOf(resp))
     }
   }
 
-  fun <REQ, RESP> bidiStreamingCall(method: suspend (Flow<REQ>) -> Flow<RESP>): ServerCallHandler<REQ, RESP> {
-    return object: ServerCallHandler<REQ, RESP> {
-      override suspend fun invoke(requests: Flow<REQ>): Flow<RESP> {
-        return method(requests)
-      }
+  fun <REQ, RESP> bidiStreamingCall(method: suspend (Flow<REQ>) -> Flow<RESP>): GrpcServerHandler<REQ, RESP> {
+    return { req ->
+      val resp = method(req.messages as Flow<REQ>)
+      GrpcResponse(req.method, emptyMetadata(), resp)
     }
   }
 

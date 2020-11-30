@@ -1,19 +1,26 @@
 package ws.leap.kert.grpc
 
+import io.grpc.MethodDescriptor
 import io.vertx.core.MultiMap
 import kotlinx.coroutines.flow.Flow
+import ws.leap.kert.core.Filter
+import ws.leap.kert.core.Handler
 
-// todo will this better?
-// data class GrpcStream<T>(val metadata: MultiMap, val messages: Flow<T>)
-data class GrpcStream(val metadata: MultiMap, val messages: Flow<*>)
-typealias GrpcRequest = GrpcStream
-typealias GrpcResponse = GrpcStream
+// todo the generic type here is a mess
+data class GrpcStream<T>(val method: MethodDescriptor<*, *>, val metadata: MultiMap, val messages: Flow<*>)
+typealias GrpcRequest<T> = GrpcStream<T>
+typealias GrpcResponse<T> = GrpcStream<T>
 
-typealias GrpcInterceptor = suspend (req: GrpcRequest, next: suspend (GrpcRequest) -> GrpcResponse) -> GrpcResponse
+// interface GrpcHandler<REQ, RESP> {
+//   suspend operator fun invoke(req: REQ): RESP
+// }
 
-interface CallHandler<REQ, RESP> {
-  suspend fun invoke(request: Flow<REQ>): Flow<RESP>
-}
+typealias GrpcHandler<REQ, RESP> = Handler<GrpcRequest<REQ>, GrpcResponse<RESP>>
+typealias GrpcServerHandler<REQ, RESP> = GrpcHandler<REQ, RESP>
+typealias GrpcClientHandler<REQ, RESP> = GrpcHandler<REQ, RESP>
 
-typealias ServerCallHandler<REQ, RESP> = CallHandler<REQ, RESP>
-typealias ClientCallHandler<REQ, RESP> = CallHandler<REQ, RESP>
+typealias GrpcInterceptor = Filter<GrpcRequest<*>, GrpcResponse<*>>
+
+typealias GrpcCallHandler<REQ, RESP> = Handler<Flow<REQ>, Flow<RESP>>
+typealias GrpcServerCallHandler<REQ, RESP> = GrpcCallHandler<REQ, RESP>
+typealias GrpcClientCallHandler<REQ, RESP> = GrpcCallHandler<REQ, RESP>

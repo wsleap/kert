@@ -6,11 +6,12 @@ import io.kotest.matchers.shouldBe
 import io.vertx.core.http.HttpVersion
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import ws.leap.kert.core.filtered
 import java.net.URL
 
 class HttpFilterSpec : FunSpec() {
   private val logger = KotlinLogging.logger {}
-  private val server = server(8080) {
+  private val server = server(8550) {
     http {
       // a filter to track response time
       filter { req, next ->
@@ -21,9 +22,13 @@ class HttpFilterSpec : FunSpec() {
         resp
       }
 
-      get("/ping") {
+      // request handler with it's own filter
+      get("/ping", filtered({
         response("pong")
-      }
+      }, { req, next ->
+        logger.info { "ping with it's own filter" }
+        next(req)
+      }) )
 
       router("/sub") {
         // a filter to verify the authentication header must be available
@@ -39,7 +44,7 @@ class HttpFilterSpec : FunSpec() {
     }
   }
 
-  private val client = client(URL("http://localhost:8080")) {
+  private val client = client(URL("http://localhost:8550")) {
     protocolVersion = HttpVersion.HTTP_2
 
     // a filter to set authentication header in request
@@ -59,7 +64,7 @@ class HttpFilterSpec : FunSpec() {
   }
 
   // a client doesn't have authentication header injected
-  private val clientNoAuth = client(URL("http://localhost:8080")) {}
+  private val clientNoAuth = client(URL("http://localhost:8550")) {}
 
   override fun beforeSpec(spec: Spec) = runBlocking {
     server.start()
@@ -73,6 +78,16 @@ class HttpFilterSpec : FunSpec() {
     context("filter on sub router") {
       test("/sub/ping works with authentication header") {
         val resp = client.get("/sub/ping")
+        resp.statusCode shouldBe 200
+        resp.body().toString() shouldBe "pong"
+      }
+
+      test("/sub/ping works with authentication header from filter") {
+        val filteredClient = clientNoAuth.filtered { req, next ->
+          req.headers["authentication"] = "mocked-authentication"
+          next(req)
+        }
+        val resp = filteredClient.get("/sub/ping")
         resp.statusCode shouldBe 200
         resp.body().toString() shouldBe "pong"
       }

@@ -4,6 +4,7 @@ import io.vertx.core.MultiMap
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpServerRequest
+import io.vertx.core.http.HttpVersion
 import io.vertx.ext.web.RoutingContext
 import io.vertx.kotlin.coroutines.toChannel
 import kotlinx.coroutines.flow.Flow
@@ -21,4 +22,5 @@ class HttpServerRequest(private val underlying: HttpServerRequest, private val r
 
   val path: String = underlying.path()
   val pathParams: MutableMap<String, String> = routingContext.pathParams()
+  val version: HttpVersion = underlying.version()
 }
