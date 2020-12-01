@@ -1,29 +1,35 @@
 package ws.leap.kert.grpc
 
 import io.grpc.Status
-import ws.leap.kert.http.*
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpHeaders
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpVersion
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import mu.KotlinLogging
 import ws.leap.kert.core.combine
+import ws.leap.kert.http.*
 
+private val grpcExceptionLogger = KotlinLogging.logger {}
 val grpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
+  val method = context[GrpcContext]?.method?.fullMethodName ?: "unknown"
+  grpcExceptionLogger.warn(exception) { "GRPC call failed, method=$method" }
+
   val routingContext = context[VertxRoutingContext]?.routingContext
     ?: throw IllegalStateException("Routing context is not available on coroutine context")
   val response = routingContext.response()
   if (!response.ended()) {
-    val status = Status.fromThrowable(exception)
-    response.putTrailer(Constants.grpcStatus, status.code.value().toString())
-    exception.message?.let {
-      response.putTrailer(Constants.grpcMessage, it)
+    try {
+      val status = Status.fromThrowable(exception)
+      response.putTrailer(Constants.grpcStatus, status.code.value().toString())
+      response.putTrailer(Constants.grpcMessage, status.description!!.removePrefix("${status.code}: "))
+    } finally {
+      response.end()
     }
-
-    response.end()
   }
 }
 
@@ -55,7 +61,10 @@ class GrpcServerBuilder(private val router: HttpRouter) {
         val methodName = req.pathParams["method"] ?: throw IllegalArgumentException("method is not provided")
         val method = registry.lookupMethod("${service.serviceDescriptor.name}/${methodName}")
         if (method != null) {
-          handleRequest(req, method, interceptorChain)
+          // TODO the context of exceptionHandler doesn't have GrpcContext
+          withContext(GrpcContext(method.methodDescriptor)) {
+            handleRequest(req, method, interceptorChain)
+          }
         } else {
           notFound()
         }

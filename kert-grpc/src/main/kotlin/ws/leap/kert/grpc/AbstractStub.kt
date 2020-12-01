@@ -21,13 +21,16 @@ abstract class AbstractStub<S>(
   protected fun <REQ, RESP> newCall(method: MethodDescriptor<REQ, RESP>,
                                     callOptions: CallOptions): GrpcClientCallHandler<REQ, RESP> {
     return { requestMessages ->
-      val handler: GrpcHandler<REQ, RESP> = { req ->
-        invokeHttp(method, req)
-      }
-      val grpcRequest = GrpcRequest<REQ>(method, emptyMetadata(), requestMessages)
-      val grpcResponse = interceptors?.let { it(grpcRequest, handler as GrpcHandler<*, *>) }
-        ?: handler(grpcRequest)
-      grpcResponse.messages as Flow<RESP>
+        val handler: GrpcHandler<REQ, RESP> = { req ->
+          invokeHttp(method, req)
+        }
+        val grpcRequest = GrpcRequest<REQ>(method, emptyMetadata(), requestMessages)
+        // TODO bidi streaming stuck when specify GrpcContext, why?
+        val grpcResponse = //withContext(GrpcContext(method)) {
+          interceptors?.let { it(grpcRequest, handler as GrpcHandler<*, *>) }
+            ?: handler(grpcRequest)
+        //}
+        grpcResponse.messages as Flow<RESP>
     }
   }
 

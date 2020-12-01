@@ -26,12 +26,15 @@ fun <REQ, RESP> Handler<REQ, RESP>.filter(filter: Filter<REQ, RESP>): Handler<RE
   return filtered(this, filter)
 }
 
+/**
+ * Combine the [filters] into one filter, with the order of inner to outer (last filter get called first).
+ */
 fun <REQ, RESP> combine(vararg filters: Filter<REQ, RESP>): Filter<REQ, RESP>? {
   var combinedFilter: Filter<REQ, RESP>? = null
   filters.map { filter ->
     combinedFilter = combinedFilter?.let { current ->
       { req, next ->
-        current(req) { filter(it, next) }
+        filter(req) { current(it, next) }
       }
     } ?: filter
   }
