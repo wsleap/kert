@@ -5,7 +5,6 @@ import io.grpc.Status
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpHeaders
 import kotlinx.coroutines.flow.*
-import ws.leap.kert.core.combine
 import ws.leap.kert.http.HttpClient
 
 // placeholder, nothing to configure right now
@@ -21,16 +20,13 @@ abstract class AbstractStub<S>(
   protected fun <REQ, RESP> newCall(method: MethodDescriptor<REQ, RESP>,
                                     callOptions: CallOptions): GrpcClientCallHandler<REQ, RESP> {
     return { requestMessages ->
-        val handler: GrpcHandler<REQ, RESP> = { req ->
-          invokeHttp(method, req)
-        }
-        val grpcRequest = GrpcRequest<REQ>(method, emptyMetadata(), requestMessages)
+        val handler: GrpcHandler<REQ, RESP> = { m, r -> invokeHttp(m, r) }
+        val grpcRequest = GrpcRequest(emptyMetadata(), requestMessages)
         // TODO bidi streaming stuck when specify GrpcContext, why?
         val grpcResponse = //withContext(GrpcContext(method)) {
-          interceptors?.let { it(grpcRequest, handler as GrpcHandler<*, *>) }
-            ?: handler(grpcRequest)
+          handle(method, grpcRequest, handler, interceptors)
         //}
-        grpcResponse.messages as Flow<RESP>
+        grpcResponse.messages
     }
   }
 
@@ -67,19 +63,19 @@ abstract class AbstractStub<S>(
       }
     }
 
-    return GrpcResponse(method, httpResponse.headers, responseMessagesFlow)
+    return GrpcResponse(httpResponse.headers, responseMessagesFlow)
   }
 
   fun intercepted(vararg interceptors: GrpcInterceptor): S {
     if (interceptors.isEmpty()) return this as S
 
-    val combinedInterceptor = combine(*interceptors)!!
+    val combinedInterceptor = combineInterceptors(*interceptors)!!
     return intercepted(combinedInterceptor)
   }
 
   fun intercepted(interceptor: GrpcInterceptor): S {
     // TODO inherit current interceptors or not??
-    return build(client, callOptions, combine(interceptors, interceptor))
+    return build(client, callOptions, combineInterceptors(interceptors, interceptor))
   }
 
   /**

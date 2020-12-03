@@ -2,7 +2,6 @@ package ws.leap.kert.grpc
 
 import io.grpc.MethodDescriptor
 import io.grpc.ServiceDescriptor
-import ws.leap.kert.core.combine
 import java.lang.IllegalArgumentException
 
 interface BindableService {
@@ -25,7 +24,7 @@ class ServerServiceMethodsBuilder {
 }
 
 /** Definition of a service to be exposed via a Server.  */
-class ServerServiceDefinition(
+data class ServerServiceDefinition(
   val serviceDescriptor: ServiceDescriptor,
   private val methods: Map<String, ServerMethodDefinition<*, *>>
 ) {
@@ -60,7 +59,7 @@ class ServerServiceDefinition(
   fun intercepted(vararg interceptors: GrpcInterceptor): ServerServiceDefinition {
     if (interceptors.isEmpty()) return this
 
-    val combinedInterceptor = combine(*interceptors)!!
+    val combinedInterceptor = combineInterceptors(*interceptors)!!
     return intercepted(combinedInterceptor)
   }
 }

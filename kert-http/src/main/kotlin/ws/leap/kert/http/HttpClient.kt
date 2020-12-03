@@ -15,8 +15,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import ws.leap.kert.core.combine
-import ws.leap.kert.core.handle
 import java.net.URL
 import kotlin.coroutines.coroutineContext
 import io.vertx.core.http.HttpClient as VHttpClient
@@ -89,13 +87,13 @@ class HttpClient internal constructor(private val underlying: VHttpClient, priva
 
   fun filtered(filter: HttpClientFilter): HttpClient {
     // TODO inherit current filters or not??
-    return HttpClient(underlying, combine(filters, filter))
+    return HttpClient(underlying, combineFilters(filters, filter))
   }
 
   fun filtered(vararg filters: HttpClientFilter): HttpClient {
     if(filters.isEmpty()) return this
 
-    val combinedFilter = combine(*filters)!!
+    val combinedFilter = combineFilters(*filters)!!
     return filtered(combinedFilter)
   }
 
@@ -124,7 +122,7 @@ class HttpClient internal constructor(private val underlying: VHttpClient, priva
           }
         }
 
-        vertxRequest.onComplete { ar ->
+        vertxRequest.response { ar ->
           if(ar.succeeded()) {
             val vertxResponse = ar.result()
             responseDeferred.complete(HttpClientResponse(vertxResponse, vertxContext))
@@ -156,7 +154,7 @@ class ClientBuilder(private val address: URL) {
       .setProtocolVersion(protocolVersion)
       .setSsl(address.protocol == "https")
 
-    val filter = combine(*filters.toTypedArray())
+    val filter = combineFilters(*filters.toTypedArray())
     val vertxClient = Kert.vertx.createHttpClient(options)
     return HttpClient(vertxClient, filter)
   }

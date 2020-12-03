@@ -66,38 +66,49 @@ class EchoServiceImpl : EchoGrpcKt.EchoImplBase() {
 }
 
 /*
+ghz --insecure -c 100 -z 30s --connections 100 \
+  --proto kert-grpc/src/test/proto/echo.proto \
+  --call ws.leap.kert.test.Echo.unary \
+  -d '{"id":1, "value":"hello"}' \
+  0.0.0.0:8551
+
 Summary:
-  Count:	1007645
-  Total:	10.00 s
-  Slowest:	39.20 ms
-  Fastest:	0.09 ms
-  Average:	0.89 ms
-  Requests/sec:	100749.94
+  Count:	2957591
+  Total:	30.00 s
+  Slowest:	41.89 ms
+  Fastest:	0.08 ms
+  Average:	0.91 ms
+  Requests/sec:	98578.21
 
 Response time histogram:
-  0.086 [1]	|
-  3.997 [981567]	|∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
-  7.908 [14266]	|∎
-  11.819 [2758]	|
-  15.731 [863]	|
-  19.642 [346]	|
-  23.553 [135]	|
-  27.465 [47]	|
-  31.376 [12]	|
-  35.287 [4]	|
-  39.199 [1]	|
+  0.078 [1]	|
+  4.259 [982402]	|∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  8.440 [13805]	|∎
+  12.622 [2524]	|
+  16.803 [775]	|
+  20.984 [421]	|
+  25.165 [53]	|
+  29.346 [10]	|
+  33.528 [3]	|
+  37.709 [3]	|
+  41.890 [3]	|
 
 Latency distribution:
   10 % in 0.33 ms
-  25 % in 0.47 ms
-  50 % in 0.66 ms
-  75 % in 0.94 ms
-  90 % in 1.42 ms
-  95 % in 2.16 ms
-  99 % in 5.46 ms
+  25 % in 0.48 ms
+  50 % in 0.69 ms
+  75 % in 0.97 ms
+  90 % in 1.46 ms
+  95 % in 2.22 ms
+  99 % in 5.64 ms
+
+Status code distribution:
+  [OK]            2957547 responses
+  [Unavailable]   43 responses
+  [Canceled]      1 responses
  */
 fun main() = runBlocking {
-  val server = server(8888) {
+  val server = server(8551) {
     grpc {
       service(EchoServiceImpl())
     }

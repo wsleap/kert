@@ -28,39 +28,50 @@ class EchoServiceJavaImpl : EchoGrpc.EchoImplBase() {
 }
 
 /*
+ghz --insecure -c 100 -z 30s --connections 100 \
+  --proto kert-grpc/src/test/proto/echo.proto \
+  --call ws.leap.kert.test.Echo.unary \
+  -d '{"id":1, "value":"hello"}' \
+  0.0.0.0:8550
+
 Summary:
-  Count:	951316
-  Total:	10.00 s
-  Slowest:	45.72 ms
-  Fastest:	0.10 ms
-  Average:	0.97 ms
-  Requests/sec:	95121.19
+  Count:	2652162
+  Total:	30.00 s
+  Slowest:	37.28 ms
+  Fastest:	0.09 ms
+  Average:	1.04 ms
+  Requests/sec:	88399.48
 
 Response time histogram:
-  0.099 [1]	|
-  4.661 [938965]	|∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
-  9.222 [11054]	|
-  13.784 [992]	|
-  18.346 [195]	|
-  22.907 [28]	|
-  27.469 [12]	|
-  32.030 [6]	|
-  36.592 [15]	|
-  41.153 [11]	|
-  45.715 [7]	|
+  0.094 [1]	|
+  3.812 [972068]	|∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  7.530 [23734]	|∎
+  11.248 [3054]	|
+  14.966 [723]	|
+  18.684 [235]	|
+  22.403 [94]	|
+  26.121 [44]	|
+  29.839 [13]	|
+  33.557 [4]	|
+  37.275 [30]	|
 
 Latency distribution:
-  10 % in 0.35 ms
-  25 % in 0.49 ms
-  50 % in 0.70 ms
-  75 % in 1.06 ms
-  90 % in 1.75 ms
-  95 % in 2.57 ms
-  99 % in 5.11 ms
+  10 % in 0.36 ms
+  25 % in 0.50 ms
+  50 % in 0.73 ms
+  75 % in 1.15 ms
+  90 % in 1.99 ms
+  95 % in 2.90 ms
+  99 % in 5.74 ms
+
+Status code distribution:
+  [OK]            2652118 responses
+  [Unavailable]   42 responses
+  [Canceled]      2 responses
  */
 fun main() {
   val server = ServerBuilder
-    .forPort(8887)
+    .forPort(8550)
     .addService(EchoServiceJavaImpl())
     .build()
 

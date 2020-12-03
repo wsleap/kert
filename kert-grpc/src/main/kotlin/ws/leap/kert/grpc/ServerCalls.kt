@@ -16,9 +16,9 @@ object ServerCalls {
    * @param method an adaptor to the actual method on the service implementation.
    */
   fun <REQ, RESP> unaryCall(method: suspend (REQ) -> RESP): GrpcServerHandler<REQ, RESP> {
-    return { req ->
-      val msg = req.messages.single() as REQ
-      GrpcResponse(req.method, emptyMetadata(), flowOf(method(msg)))
+    return { _, req ->
+      val msg = req.messages.single()
+      GrpcResponse(emptyMetadata(), flowOf(method(msg)))
     }
   }
 
@@ -28,9 +28,9 @@ object ServerCalls {
    * @param method an adaptor to the actual method on the service implementation.
    */
   fun <REQ, RESP> serverStreamingCall(method: suspend (REQ) -> Flow<RESP>): GrpcServerHandler<REQ, RESP> {
-    return { req ->
-      val msg = req.messages.single() as REQ
-      GrpcResponse(req.method, emptyMetadata(), method(msg))
+    return { _, req ->
+      val msg = req.messages.single()
+      GrpcResponse(emptyMetadata(), method(msg))
     }
   }
 
@@ -40,16 +40,16 @@ object ServerCalls {
    * @param method an adaptor to the actual method on the service implementation.
    */
   fun <REQ, RESP> clientStreamingCall(method: suspend(Flow<REQ>) -> RESP): GrpcServerHandler<REQ, RESP> {
-    return { req ->
-      val resp = method(req.messages as Flow<REQ>)
-      GrpcResponse(req.method, emptyMetadata(), flowOf(resp))
+    return { _, req ->
+      val resp = method(req.messages)
+      GrpcResponse(emptyMetadata(), flowOf(resp))
     }
   }
 
   fun <REQ, RESP> bidiStreamingCall(method: suspend (Flow<REQ>) -> Flow<RESP>): GrpcServerHandler<REQ, RESP> {
-    return { req ->
-      val resp = method(req.messages as Flow<REQ>)
-      GrpcResponse(req.method, emptyMetadata(), resp)
+    return { _, req ->
+      val resp = method(req.messages)
+      GrpcResponse(emptyMetadata(), resp)
     }
   }
 

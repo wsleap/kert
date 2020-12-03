@@ -6,7 +6,6 @@ import io.vertx.core.http.HttpServerOptions
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.await
 import kotlinx.coroutines.CoroutineExceptionHandler
-import ws.leap.kert.core.Filter
 
 class HttpServerBuilder(private val router: Router) {
   fun http(exceptionHandler: CoroutineExceptionHandler? = null): HttpRouter {

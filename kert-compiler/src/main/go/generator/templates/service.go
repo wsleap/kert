@@ -8,7 +8,7 @@ package {{$s.JavaPackage}}
 import java.net.URL
 import kotlinx.coroutines.flow.Flow
 import io.grpc.MethodDescriptor.generateFullMethodName
-import ws.leap.kert.core.combine
+import ws.leap.kert.grpc.combineInterceptors
 import ws.leap.kert.grpc.ClientCalls
 import ws.leap.kert.grpc.ServerCalls
 import ws.leap.kert.http.HttpClient
@@ -46,7 +46,7 @@ object {{$s.Name}}GrpcKt {
    * Creates a new stub with Client
    */
   fun stub(client: HttpClient, callOptions: CallOptions = CallOptions(), interceptors: List<GrpcInterceptor> = emptyList()): {{.Name}}Stub {
-    val combinedInterceptor = combine(*interceptors.toTypedArray())
+    val combinedInterceptor = combineInterceptors(*interceptors.toTypedArray())
     return {{.Name}}Stub(client, callOptions, combinedInterceptor)
   }
 

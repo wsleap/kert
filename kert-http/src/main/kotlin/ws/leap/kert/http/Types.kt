@@ -1,4 +1,4 @@
-package ws.leap.kert.core
+package ws.leap.kert.http
 
 typealias Handler<REQ, RESP> = suspend (req: REQ) -> RESP
 typealias Filter<REQ, RESP> = suspend (req: REQ, next: Handler<REQ, RESP>) -> RESP
@@ -6,7 +6,7 @@ typealias Filter<REQ, RESP> = suspend (req: REQ, next: Handler<REQ, RESP>) -> RE
 fun <REQ, RESP> filtered(handler: Handler<REQ, RESP>, vararg filters: Filter<REQ, RESP>): Handler<REQ, RESP> {
   if(filters.isEmpty()) return handler
 
-  val combinedFilter = combine(*filters)!!
+  val combinedFilter = combineFilters(*filters)!!
   return { req: REQ ->
     combinedFilter(req, handler)
   }
@@ -29,24 +29,28 @@ fun <REQ, RESP> Handler<REQ, RESP>.filter(filter: Filter<REQ, RESP>): Handler<RE
 /**
  * Combine the [filters] into one filter, with the order of inner to outer (last filter get called first).
  */
-fun <REQ, RESP> combine(vararg filters: Filter<REQ, RESP>): Filter<REQ, RESP>? {
-  var combinedFilter: Filter<REQ, RESP>? = null
-  filters.map { filter ->
-    combinedFilter = combinedFilter?.let { current ->
-      { req, next ->
-        filter(req) { current(it, next) }
-      }
-    } ?: filter
+fun <REQ, RESP> combineFilters(vararg filters: Filter<REQ, RESP>): Filter<REQ, RESP>? {
+  if (filters.isEmpty()) return null
+
+  return filters.reduce { left, right ->
+    { req, next ->
+      right(req) { left(it, next) }
+    }
   }
-  return combinedFilter
 }
 
-fun <REQ, RESP> combine(current: Filter<REQ, RESP>?, filter: Filter<REQ, RESP>): Filter<REQ, RESP>? {
+fun <REQ, RESP> combineFilters(current: Filter<REQ, RESP>?, filter: Filter<REQ, RESP>): Filter<REQ, RESP>? {
   return current?.let { cur ->
     { req, next -> cur(req) { filter(it, next) } }
   } ?: filter
 }
 
-suspend fun <REQ, RESP> handle(req: REQ, handler: Handler<REQ, RESP>, filter: Filter<REQ, RESP>?): RESP {
+internal suspend fun <REQ, RESP> handle(req: REQ, handler: Handler<REQ, RESP>, filter: Filter<REQ, RESP>?): RESP {
   return filter?.let { it(req, handler) } ?: handler(req)
 }
+
+typealias HttpClientHandler = Handler<HttpClientRequest, HttpClientResponse>
+typealias HttpClientFilter = Filter<HttpClientRequest, HttpClientResponse>
+
+typealias HttpServerHandler = Handler<HttpServerRequest, HttpServerResponse>
+typealias HttpServerFilter = Filter<HttpServerRequest, HttpServerResponse>

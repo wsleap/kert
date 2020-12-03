@@ -6,7 +6,6 @@ import io.kotest.matchers.shouldBe
 import io.vertx.core.http.HttpVersion
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import ws.leap.kert.core.filtered
 import java.net.URL
 
 class HttpFilterSpec : FunSpec() {
