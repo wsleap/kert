@@ -13,7 +13,9 @@ import java.net.URL
 class HttpServerClientSpec : FunSpec() {
   private val logger = KotlinLogging.logger {}
   private val server = httpTestServer()
-  private val client = client(URL("http://localhost:8550"))
+  private val client = client {
+    defaultPort = 8550
+  }
 
   override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
     server.start()

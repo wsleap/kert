@@ -4,6 +4,7 @@ import io.grpc.MethodDescriptor
 import io.grpc.Status
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpHeaders
+import io.vertx.core.http.impl.headers.HeadersMultiMap
 import kotlinx.coroutines.flow.*
 import ws.leap.kert.http.HttpClient
 
@@ -39,12 +40,11 @@ abstract class AbstractStub<S>(
     }
 
     val httpRequestPath = "/${method.fullMethodName}"
-    val httpResponse = client.post(httpRequestPath) {
-      headers.addAll(request.metadata)
-      headers[HttpHeaders.CONTENT_TYPE] = Constants.contentTypeGrpcProto
-      body = httpRequestBody
-    }
+    val headers = HeadersMultiMap()
+    headers.addAll(request.metadata)
+    headers[HttpHeaders.CONTENT_TYPE] = Constants.contentTypeGrpcProto
 
+    val httpResponse = client.post(httpRequestPath, headers = headers, body = httpRequestBody)
     if (httpResponse.statusCode != 200) {
       throw IllegalStateException("GRPC call failed, status=${httpResponse.statusCode}")
     }

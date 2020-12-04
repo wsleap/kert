@@ -43,7 +43,8 @@ class HttpFilterSpec : FunSpec() {
     }
   }
 
-  private val client = client(URL("http://localhost:8550")) {
+  private val client = client {
+    defaultPort = 8550
     protocolVersion = HttpVersion.HTTP_2
 
     // a filter to set authentication header in request
@@ -57,13 +58,15 @@ class HttpFilterSpec : FunSpec() {
       val start = System.currentTimeMillis()
       val resp = next(req)
       val time = System.currentTimeMillis() - start
-      logger.info { "${req.path} client response time is $time millis" }
+      logger.info { "${req.uri} client response time is $time millis" }
       resp
     }
   }
 
   // a client doesn't have authentication header injected
-  private val clientNoAuth = client(URL("http://localhost:8550")) {}
+  private val clientNoAuth = client {
+    defaultPort = 8550
+  }
 
   override fun beforeSpec(spec: Spec) = runBlocking {
     server.start()

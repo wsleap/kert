@@ -4,6 +4,7 @@ import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.vertx.core.http.HttpVersion
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
@@ -12,10 +13,10 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import ws.leap.kert.http.server
+import ws.leap.kert.http.client
 import ws.leap.kert.test.EchoCountReq
 import ws.leap.kert.test.EchoGrpcKt
 import ws.leap.kert.test.EchoReq
-import java.net.URL
 
 class GrpcBasicSpec : FunSpec() {
   val logger = KotlinLogging.logger {}
@@ -25,13 +26,17 @@ class GrpcBasicSpec : FunSpec() {
     }
   }
 
-  private val client = EchoGrpcKt.stub(URL("http://localhost:8551"))
+  private val client = client {
+    protocolVersion = HttpVersion.HTTP_2
+    defaultPort = 8551
+  }
+  private val stub = EchoGrpcKt.stub(client)
 
   override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
     server.start()
 
     // TODO client-stream and bidi-stream will fail (if run the case only)
-    client.unary(EchoReq.newBuilder().setId(1).setValue("hello").build())
+    stub.unary(EchoReq.newBuilder().setId(1).setValue("hello").build())
   }
 
   override fun afterSpec(spec: Spec) = runBlocking {
@@ -42,14 +47,14 @@ class GrpcBasicSpec : FunSpec() {
     context("Grpc server/client") {
       test("unary") {
         val req = EchoReq.newBuilder().setId(1).setValue(EchoTest.message).build()
-        val resp = client.unary(req)
+        val resp = stub.unary(req)
         resp.id shouldBe 1
         resp.value shouldBe EchoTest.message
       }
 
       test("server stream") {
         val req = EchoCountReq.newBuilder().setCount(EchoTest.streamSize).build()
-        val resp = client.serverStreaming(req)
+        val resp = stub.serverStreaming(req)
         val respMsgs = resp.map { msg ->
           logger.info { "Client received id=${msg.id}" }
           msg
@@ -67,7 +72,7 @@ class GrpcBasicSpec : FunSpec() {
           }
         }
 
-        val resp = client.clientStreaming(req)
+        val resp = stub.clientStreaming(req)
         resp.count shouldBe EchoTest.streamSize
       }
 
@@ -81,7 +86,7 @@ class GrpcBasicSpec : FunSpec() {
           }
         }
 
-        val resp = client.bidiStreaming(req)
+        val resp = stub.bidiStreaming(req)
         var count = 0
         resp.collect { msg ->
           count++

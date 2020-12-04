@@ -50,14 +50,6 @@ object {{$s.Name}}GrpcKt {
     return {{.Name}}Stub(client, callOptions, combinedInterceptor)
   }
 
-  /**
-   * Creates a new stub
-   */
-  fun stub(address: URL, callOptions: CallOptions = CallOptions(), interceptors: List<GrpcInterceptor> = emptyList()): {{.Name}}Stub {
-    val client = HttpClient.create(address)
-    return stub(client, callOptions, interceptors)
-  }
-
   {{/**
    * <pre>
    * Test service that supports all call types.

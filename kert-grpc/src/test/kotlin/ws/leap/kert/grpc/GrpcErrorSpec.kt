@@ -4,13 +4,14 @@ import io.grpc.StatusException
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.FunSpec
+import io.vertx.core.http.HttpVersion
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import ws.leap.kert.http.client
 import ws.leap.kert.http.server
 import ws.leap.kert.test.*
-import java.net.URL
 
 class GrpcErrorSpec : FunSpec() {
   val logger = KotlinLogging.logger {}
@@ -75,7 +76,11 @@ class GrpcErrorSpec : FunSpec() {
     }
   }
 
-  private val client = EchoGrpcKt.stub(URL("http://localhost:8551"))
+  private val client = client {
+    defaultPort = 8551
+    protocolVersion = HttpVersion.HTTP_2
+  }
+  private val stub = EchoGrpcKt.stub(client)
 
   override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
     server.start()
@@ -90,13 +95,13 @@ class GrpcErrorSpec : FunSpec() {
       test("unary") {
         val req = EchoReq.newBuilder().setId(1).setValue(EchoTest.message).build()
         shouldThrow<StatusException> {
-          client.unary(req)
+          stub.unary(req)
         }
       }
 
       test("server stream") {
         val req = EchoCountReq.newBuilder().setCount(EchoTest.streamSize).build()
-        val resp = client.serverStreaming(req)
+        val resp = stub.serverStreaming(req)
 
         shouldThrow<StatusException> {
           resp.map { msg ->
@@ -117,7 +122,7 @@ class GrpcErrorSpec : FunSpec() {
         }
 
         shouldThrow<StatusException> {
-          client.clientStreaming(req)
+          stub.clientStreaming(req)
         }
       }
 
@@ -131,7 +136,7 @@ class GrpcErrorSpec : FunSpec() {
           }
         }
 
-        val resp = client.bidiStreaming(req)
+        val resp = stub.bidiStreaming(req)
         shouldThrow<StatusException> {
           resp.collect { msg ->
             logger.info { "Client received id=${msg.id}" }
