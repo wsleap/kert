@@ -24,10 +24,13 @@ allprojects {
     plugin("maven-publish")
     plugin("signing")
     plugin("com.adarshr.test-logger")
+
+    plugin("org.jetbrains.dokka")
   }
 
   repositories {
     mavenLocal()
+    jcenter()
     mavenCentral()
   }
 
@@ -82,10 +85,16 @@ allprojects {
     }
   }
 
+  val isSnapshot = (version as String).endsWith("SNAPSHOT", true)
   publishing {
     repositories {
       maven {
-        url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+        url = if (isSnapshot) {
+          uri("https://oss.sonatype.org/content/repositories/snapshots")
+        } else {
+          uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+        }
+
         val ossrhUsername: String? by project
         val ossrhPassword: String? by project
         credentials {
@@ -96,8 +105,13 @@ allprojects {
     }
   }
 
-  publishing
+  /**
+   * require these properties defined
+   * signing.keyId
+   * signing.password
+   * signing.secretKeyRingFile
+   */
   signing {
-    isRequired = false
+    isRequired = !isSnapshot
   }
 }

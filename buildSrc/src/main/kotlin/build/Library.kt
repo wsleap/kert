@@ -14,6 +14,8 @@ fun Project.librarySupport() {
     "api"(kotlin("stdlib-jdk8"))
     "api"("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Deps.kotlinCoroutineVersion}")
     "implementation"("org.slf4j:slf4j-api:1.7.25")
+
+    "dokkaHtmlPlugin"("org.jetbrains.dokka:kotlin-as-java-plugin:1.4.20")
   }
 
   val sourceSets = extensions.getByName("sourceSets") as SourceSetContainer
@@ -21,21 +23,19 @@ fun Project.librarySupport() {
     register<Jar>("sourcesJar") {
       from(sourceSets["main"].allJava)
       archiveClassifier.set("sources")
+      from(sourceSets.getByName("main").allSource)
     }
 
-//    register<Jar>("javadocJar") {
-//      from(tasks.javadoc)
-//      archiveClassifier.set("javadoc")
-//    }
+    register<Jar>("javadocJar") {
+      archiveClassifier.set("javadoc")
+      from(tasks["dokkaHtml"])
+      dependsOn(tasks["dokkaHtml"])
+    }
   }
 
   configure<JavaPluginExtension> {
     withSourcesJar()
-  }
-
-  tasks.named<Jar>("sourcesJar") {
-    archiveClassifier.set("sources")
-    from(sourceSets.getByName("main").allSource)
+    withJavadocJar()
   }
 
   configure<PublishingExtension> {

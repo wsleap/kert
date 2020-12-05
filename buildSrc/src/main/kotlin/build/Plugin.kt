@@ -31,13 +31,18 @@ fun Project.pluginSupport(pluginName: String) {
     "testImplementation"(kotlin("stdlib-jdk8"))
   }
 
-  val pluginPath = "$buildDir/exe/$pluginName${Consts.exeSuffix}"
+  // overwrite os & arch if specified by command line
+  val os = if (hasProperty("targetOs")) property("targetOs") as String else Consts.os
+  val arch = if (hasProperty("targetArch")) property("targetArch") as String else Consts.arch
+  val exeSuffix = if(os == "windows") ".exe" else ""
+
+  val pluginPath = "$buildDir/exe/$pluginName${exeSuffix}"
   val artifactStagingPath: File = file("$buildDir/artifacts")
 
   tasks.register("buildPlugin") {
     doLast {
       exec {
-        environment = environment + mapOf("GOOS" to goOs(Consts.os), "GOARCH" to goArch(Consts.arch))
+        environment = environment + mapOf("GOOS" to goOs(os), "GOARCH" to goArch(arch))
         commandLine = listOf("go", "build", "-o", pluginPath, "src/main/go/main.go")
       }
     }
@@ -46,7 +51,7 @@ fun Project.pluginSupport(pluginName: String) {
   tasks.register("buildArtifacts", Copy::class) {
     dependsOn("buildPlugin")
     from("$buildDir/exe") {
-      if (Consts.os != "windows") {
+      if (os != "windows") {
         rename("(.+)", "$1.exe")
       }
     }
@@ -90,7 +95,7 @@ fun Project.pluginSupport(pluginName: String) {
       create<MavenPublication>("maven") {
         artifactId = pluginName
         artifact(file("$artifactStagingPath/$pluginName.exe")) {
-          classifier = Consts.os + "-" + Consts.arch
+          classifier = "$os-$arch"
           extension = "exe"
           builtBy(tasks.named("buildArtifacts"))
         }

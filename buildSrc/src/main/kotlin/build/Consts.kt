@@ -7,8 +7,8 @@ import org.gradle.api.publish.maven.MavenPom
 object Consts {
   private val osDetector = OsDetector()
 
-  val os = osDetector.os
-  val arch = osDetector.arch
+  val os: String = osDetector.os
+  val arch: String = osDetector.arch
   val exeSuffix = if(os == "windows") ".exe" else ""
 
   val pom = Action<MavenPom> {
