@@ -10,15 +10,15 @@ import io.vertx.core.http.HttpVersion
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import ws.leap.kert.http.client
-import ws.leap.kert.http.server
+import ws.leap.kert.http.httpClient
+import ws.leap.kert.http.httpServer
 import ws.leap.kert.test.EchoGrpcKt
 import ws.leap.kert.test.EchoReq
 import java.lang.IllegalArgumentException
 
 class GrpcInterceptorSpec : FunSpec() {
   val logger = KotlinLogging.logger {}
-  private val server = server(8551) {
+  private val server = httpServer(8551) {
     grpc {
       interceptor(object: GrpcInterceptor {
         override suspend fun <REQ, RESP> invoke(method: MethodDescriptor<REQ, RESP>,
@@ -43,9 +43,11 @@ class GrpcInterceptorSpec : FunSpec() {
   override fun afterSpec(spec: Spec) = runBlocking { server.stop() }
 
 
-  private val client = client {
-    defaultPort = 8551
-    protocolVersion = HttpVersion.HTTP_2
+  private val client = httpClient {
+    options {
+      defaultPort = 8551
+      protocolVersion = HttpVersion.HTTP_2
+    }
   }
   private val stub = EchoGrpcKt.stub(client)
   private val stubWithAuth = stub.intercepted(object: GrpcInterceptor {

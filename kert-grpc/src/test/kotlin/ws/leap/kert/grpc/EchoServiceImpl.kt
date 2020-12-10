@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import ws.leap.kert.http.server
+import ws.leap.kert.http.httpServer
 
 object EchoTest {
   val streamSize = 500
@@ -108,7 +108,7 @@ Status code distribution:
   [Canceled]      1 responses
  */
 fun main() = runBlocking {
-  val server = server(8551) {
+  val server = httpServer(8551) {
     grpc {
       service(EchoServiceImpl())
     }

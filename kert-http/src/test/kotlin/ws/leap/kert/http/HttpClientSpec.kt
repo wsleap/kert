@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import java.net.URL
 
 class HttpClientSpec : FunSpec() {
-  private val client = client()
+  private val client = httpClient()
   init {
     test("call with url") {
       val resp = client.get(URL("https://www.google.com"))

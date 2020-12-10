@@ -1,31 +1,53 @@
 package ws.leap.kert.http
 
 import io.vertx.core.*
-import io.vertx.core.http.HttpServer
+import io.vertx.core.http.HttpServer as VHttpServer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.await
 import kotlinx.coroutines.CoroutineExceptionHandler
 
-class HttpServerBuilder(private val router: Router) {
-  fun http(exceptionHandler: CoroutineExceptionHandler? = null): HttpRouter {
-    return HttpRouter(router, null, exceptionHandler)
+internal data class RouterDef(
+  val exceptionHandler: CoroutineExceptionHandler?,
+  val configure: HttpRouterBuilder.() -> Unit
+)
+
+class HttpServerBuilder(private val port: Int) {
+  private val options = HttpServerOptions()
+  private val filters = mutableListOf<HttpServerFilter>()
+  private val routers = mutableListOf<RouterDef>()
+  var exceptionHandler: CoroutineExceptionHandler = defaultHttpExceptionHandler
+
+  fun options(configure: HttpServerOptions.() -> Unit) {
+    configure(options)
   }
 
-  fun http(exceptionHandler: CoroutineExceptionHandler? = null, configure: HttpRouter.() -> Unit): HttpRouter {
-    val router = http(exceptionHandler)
-    configure(router)
-    return router
+  fun filter(filter: HttpServerFilter) {
+    filters.add(filter)
+  }
+
+  fun router(exceptionHandler: CoroutineExceptionHandler? = null, configure: HttpRouterBuilder.() -> Unit) {
+    routers.add(RouterDef(exceptionHandler, configure))
+  }
+
+  fun build(): HttpServer {
+    val filter = combineFilters(*filters.toTypedArray())
+
+    val vertxRouter = Router.router(Kert.vertx)
+    for(router in routers) {
+      val builder = HttpRouterBuilder(vertxRouter, filter, router.exceptionHandler ?: exceptionHandler)
+      router.configure(builder)
+      builder.build()
+    }
+
+    return HttpServer(port, options, vertxRouter)
   }
 }
 
-internal class ServerVerticle(private val port: Int, private val router: Router) : AbstractVerticle() {
-  private lateinit var server: HttpServer
+internal class ServerVerticle(private val port: Int, private val options: HttpServerOptions, private val router: Router) : AbstractVerticle() {
+  private lateinit var server: VHttpServer
 
-  private fun createServer(vertx: Vertx): HttpServer {
-    val options = HttpServerOptions()
-      .setSsl(false)
-
+  private fun createServer(vertx: Vertx): VHttpServer {
     return vertx.createHttpServer(options)
   }
 
@@ -53,19 +75,15 @@ internal class ServerVerticle(private val port: Int, private val router: Router)
   }
 }
 
-class HttpServer(private val port: Int, private val configureRouter: HttpServerBuilder.() -> Unit) {
+class HttpServer(private val port: Int, private val options: HttpServerOptions, private val router: Router) {
   private var deployId: String? = null
 
   suspend fun start() {
     if(deployId != null) return
 
-    val router = Router.router(Kert.vertx)
-    val routerConfigurator = HttpServerBuilder(router)
-    configureRouter(routerConfigurator)
-
     val desiredInstances = VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE
     val deploymentOptions = DeploymentOptions().setInstances(desiredInstances)
-    deployId = Kert.vertx.deployVerticle({ ServerVerticle(port, router) }, deploymentOptions).await()
+    deployId = Kert.vertx.deployVerticle({ ServerVerticle(port, options, router) }, deploymentOptions).await()
   }
 
   suspend fun stop() {
@@ -76,6 +94,8 @@ class HttpServer(private val port: Int, private val configureRouter: HttpServerB
   }
 }
 
-fun server(port: Int, configureRouter: HttpServerBuilder.() -> Unit): ws.leap.kert.http.HttpServer {
-  return HttpServer(port, configureRouter)
+fun httpServer(port: Int, configure: HttpServerBuilder.() -> Unit): HttpServer {
+  val builder = HttpServerBuilder(port)
+  configure(builder)
+  return builder.build()
 }

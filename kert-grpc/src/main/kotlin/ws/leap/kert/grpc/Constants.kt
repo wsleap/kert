@@ -5,7 +5,7 @@ object Constants {
   const val messageHeaderSize = 5
   const val grpcStatus = "grpc-status"
   const val grpcMessage = "grpc-message"
-  val contentTypeGrpcProto = "application/grpc+proto"
+  val contentTypeGrpcProto = "application/grpc"
   val contentTypeGrpcJson = "application/grpc+json"
   val contentTypeGrpcWeb = "application/grpc+web"
 }

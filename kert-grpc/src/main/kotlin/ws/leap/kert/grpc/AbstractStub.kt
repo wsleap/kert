@@ -4,6 +4,7 @@ import io.grpc.MethodDescriptor
 import io.grpc.Status
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpHeaders
+import io.vertx.core.http.HttpVersion
 import io.vertx.core.http.impl.headers.HeadersMultiMap
 import kotlinx.coroutines.flow.*
 import ws.leap.kert.http.HttpClient
@@ -18,6 +19,11 @@ abstract class AbstractStub<S>(
   protected val callOptions: CallOptions = CallOptions(),
   private val interceptors: GrpcInterceptor? = null
 ) {
+  init {
+    require(client.protocolVersion == HttpVersion.HTTP_2) {
+      "HTTP client for GRPC must be on HTTP2"
+    }
+  }
   protected fun <REQ, RESP> newCall(method: MethodDescriptor<REQ, RESP>,
                                     callOptions: CallOptions): GrpcClientCallHandler<REQ, RESP> {
     return { requestMessages ->
@@ -52,7 +58,7 @@ abstract class AbstractStub<S>(
     val responseMessages = GrpcUtils.readMessages(httpResponse.body, responseDeserializer)
     val responseMessagesFlow = responseMessages.onCompletion { cause ->
       if (cause == null) {
-        val trailers = httpResponse.trailers
+        val trailers = httpResponse.trailers()
         // fail the flow if trailer is missing or not OK
         val statusCode = trailers[Constants.grpcStatus]?.toInt()
           ?: throw IllegalStateException("GRPC status is missing, request=$httpRequestPath")

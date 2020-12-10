@@ -8,17 +8,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
-fun httpTestServer(): HttpServer = server(8550) {
+fun httpTestServer(): HttpServer = httpServer(8550) {
   val logger = KotlinLogging.logger {}
 
-  http {
-    filter { req, next ->
-      logger.info { "request ${req.path} in filter1" }
-      val resp = next(req)
-      logger.info { "response for ${resp} in filter1" }
-      resp
-    }
+  // global filter
+  filter { req, next ->
+    logger.info { "request ${req.path} in filter1" }
+    val resp = next(req)
+    logger.info { "response for ${resp} in filter1" }
+    resp
+  }
 
+  router {
     filter { req, next ->
       logger.info { "request ${req.path} in filter2" }
       val resp = next(req)
@@ -28,7 +29,7 @@ fun httpTestServer(): HttpServer = server(8550) {
 
     get("/ping") {
       val data = Buffer.buffer("pong".toByteArray())
-      response(data)
+      response(body = data)
     }
 
     get("/server-stream") {
@@ -39,7 +40,7 @@ fun httpTestServer(): HttpServer = server(8550) {
         }
       }
 
-      response(data)
+      response(body = data)
     }
 
     post("/client-stream") { req ->
@@ -62,10 +63,10 @@ fun httpTestServer(): HttpServer = server(8550) {
         data
       }
 
-      response(data)
+      response(body = data)
     }
 
-    router("/sub") {
+    subRouter("/sub") {
       filter { req, next ->
         logger.info { "request ${req.path} in sub filter" }
         val resp = next(req)
@@ -74,7 +75,7 @@ fun httpTestServer(): HttpServer = server(8550) {
       }
 
       get("/hello") {
-        response("world")
+        response(body ="world")
       }
     }
   }

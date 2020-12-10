@@ -3,23 +3,23 @@ package ws.leap.kert.http
 import io.vertx.core.MultiMap
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
+import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServerRequest
 import io.vertx.core.http.HttpVersion
 import io.vertx.ext.web.RoutingContext
 import io.vertx.kotlin.coroutines.toChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.reduce
 
-class HttpServerRequest(private val underlying: HttpServerRequest, private val routingContext: RoutingContext) {
+class HttpServerRequest(private val underlying: HttpServerRequest, private val routingContext: RoutingContext): HttpRequest {
   private val context = Vertx.currentContext() ?: throw IllegalStateException("Request must be created on vertx context")
-  val headers: MultiMap = underlying.headers()
-  fun header(name: String): String? = underlying.getHeader(name)
+
+  override val method: HttpMethod = underlying.method()
+  override val uri: String = underlying.uri()
+  override val headers: MultiMap = underlying.headers()
+  override val body: Flow<Buffer> = underlying.toChannel(context).consumeAsFlow()
+
   val params: MultiMap = underlying.params()
-
-  val body: Flow<Buffer> = underlying.toChannel(context).consumeAsFlow()
-  suspend fun body(): Buffer = body.reduce { a, v -> a.appendBuffer(v) }
-
   val path: String = underlying.path()
   val pathParams: MutableMap<String, String> = routingContext.pathParams()
   val version: HttpVersion = underlying.version()

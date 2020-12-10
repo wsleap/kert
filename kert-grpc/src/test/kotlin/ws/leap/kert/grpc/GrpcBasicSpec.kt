@@ -12,23 +12,25 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import ws.leap.kert.http.server
-import ws.leap.kert.http.client
+import ws.leap.kert.http.httpServer
+import ws.leap.kert.http.httpClient
 import ws.leap.kert.test.EchoCountReq
 import ws.leap.kert.test.EchoGrpcKt
 import ws.leap.kert.test.EchoReq
 
 class GrpcBasicSpec : FunSpec() {
   val logger = KotlinLogging.logger {}
-  private val server = server(8551) {
+  private val server = httpServer(8551) {
     grpc {
       service(EchoServiceImpl())
     }
   }
 
-  private val client = client {
-    protocolVersion = HttpVersion.HTTP_2
-    defaultPort = 8551
+  private val client = httpClient {
+    options {
+      protocolVersion = HttpVersion.HTTP_2
+      defaultPort = 8551
+    }
   }
   private val stub = EchoGrpcKt.stub(client)
 

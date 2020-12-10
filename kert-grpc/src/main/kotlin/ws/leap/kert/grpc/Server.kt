@@ -4,16 +4,16 @@ import io.grpc.Status
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpVersion
+import io.vertx.core.http.impl.headers.HeadersMultiMap
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import ws.leap.kert.http.*
 
 private val grpcExceptionLogger = KotlinLogging.logger {}
-val grpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
+val defaultGrpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
   val method = context[GrpcContext]?.method?.fullMethodName ?: "unknown"
   grpcExceptionLogger.warn(exception) { "GRPC call failed, method=$method" }
 
@@ -32,14 +32,15 @@ val grpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
 }
 
 fun HttpServerBuilder.grpc(configure: GrpcServerBuilder.() -> Unit) {
-  val router = http(grpcExceptionHandler)
-  val builder = GrpcServerBuilder(router)
-  configure(builder)
-  builder.build()
+  router(defaultGrpcExceptionHandler) {
+    val builder = GrpcServerBuilder(this)
+    configure(builder)
+    builder.build()
+  }
 }
 
 // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
-class GrpcServerBuilder(private val router: HttpRouter) {
+class GrpcServerBuilder(private val httpRouterBuilder: HttpRouterBuilder) {
   private val registry = ServiceRegistry()
   private val interceptors = mutableListOf<GrpcInterceptor>()
 
@@ -51,17 +52,17 @@ class GrpcServerBuilder(private val router: HttpRouter) {
   }
 
   fun build() {
-    val interceptorChain = combineInterceptors(*interceptors.toTypedArray())
+    val finalInterceptor = combineInterceptors(*interceptors.toTypedArray())
 
     for(service in registry.services()) {
-      router.call(HttpMethod.POST, "/${service.serviceDescriptor.name}/:method") { req ->
+      httpRouterBuilder.call(HttpMethod.POST, "/${service.serviceDescriptor.name}/:method") { req ->
         // get method from url
         val methodName = req.pathParams["method"] ?: throw IllegalArgumentException("method is not provided")
         val method = registry.lookupMethod("${service.serviceDescriptor.name}/${methodName}")
         if (method != null) {
           // TODO the context of exceptionHandler doesn't have GrpcContext
           withContext(GrpcContext(method.methodDescriptor)) {
-            handleRequest(req, method, interceptorChain)
+            handleRequest(req, method, finalInterceptor)
           }
         } else {
           notFound()
@@ -71,9 +72,10 @@ class GrpcServerBuilder(private val router: HttpRouter) {
   }
 
   private fun notFound(): HttpServerResponse {
-    val resp = response(flowOf(), contentType = Constants.contentTypeGrpcProto)
-    resp.trailers[Constants.grpcStatus] = Status.NOT_FOUND.code.value().toString()
-    return resp
+    return response(
+      contentType = Constants.contentTypeGrpcProto,
+      trailers = { HeadersMultiMap().add(Constants.grpcStatus, Status.NOT_FOUND.code.value().toString()) }
+    )
   }
 
   private suspend fun <REQ, RESP> handleRequest(request: HttpServerRequest, method: ServerMethodDefinition<REQ, RESP>,
@@ -89,10 +91,12 @@ class GrpcServerBuilder(private val router: HttpRouter) {
       val buf = GrpcUtils.serializeMessagePacket(msg)
       Buffer.buffer(buf)
     }
-    val response = response(body = httpBody, contentType = Constants.contentTypeGrpcProto)
-    response.headers.addAll(grpcResponse.metadata)
-    response.trailers[Constants.grpcStatus] = Status.OK.code.value().toString()
-    return response
+    return response(
+      headers = grpcResponse.metadata,
+      body = httpBody,
+      contentType = Constants.contentTypeGrpcProto,
+      trailers = { HeadersMultiMap().add(Constants.grpcStatus, Status.OK.code.value().toString()) }
+    )
   }
 
   private fun verifyRequest(request: HttpServerRequest) {

@@ -9,13 +9,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import ws.leap.kert.http.client
-import ws.leap.kert.http.server
+import ws.leap.kert.http.httpClient
+import ws.leap.kert.http.httpServer
 import ws.leap.kert.test.*
 
 class GrpcErrorSpec : FunSpec() {
   val logger = KotlinLogging.logger {}
-  private val server = server(8551) {
+  private val server = httpServer(8551) {
     grpc {
       val echoService = object: EchoGrpcKt.EchoImplBase() {
         override suspend fun unary(req: EchoReq): EchoResp {
@@ -76,9 +76,11 @@ class GrpcErrorSpec : FunSpec() {
     }
   }
 
-  private val client = client {
-    defaultPort = 8551
-    protocolVersion = HttpVersion.HTTP_2
+  private val client = httpClient {
+    options {
+      defaultPort = 8551
+      protocolVersion = HttpVersion.HTTP_2
+    }
   }
   private val stub = EchoGrpcKt.stub(client)
 

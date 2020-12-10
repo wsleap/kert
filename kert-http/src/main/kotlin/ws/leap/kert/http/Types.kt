@@ -3,7 +3,7 @@ package ws.leap.kert.http
 typealias Handler<REQ, RESP> = suspend (req: REQ) -> RESP
 typealias Filter<REQ, RESP> = suspend (req: REQ, next: Handler<REQ, RESP>) -> RESP
 
-fun <REQ, RESP> filtered(handler: Handler<REQ, RESP>, vararg filters: Filter<REQ, RESP>): Handler<REQ, RESP> {
+fun <REQ, RESP> withFilters(handler: Handler<REQ, RESP>, vararg filters: Filter<REQ, RESP>): Handler<REQ, RESP> {
   if(filters.isEmpty()) return handler
 
   val combinedFilter = combineFilters(*filters)!!
@@ -13,7 +13,7 @@ fun <REQ, RESP> filtered(handler: Handler<REQ, RESP>, vararg filters: Filter<REQ
 }
 
 fun <REQ, RESP> Handler<REQ, RESP>.filters(vararg filters: Filter<REQ, RESP>): Handler<REQ, RESP> {
-  return filtered(this, *filters)
+  return withFilters(this, *filters)
 }
 
 fun <REQ, RESP> filtered(handler: Handler<REQ, RESP>, filter: Filter<REQ, RESP>): Handler<REQ, RESP> {
@@ -39,9 +39,16 @@ fun <REQ, RESP> combineFilters(vararg filters: Filter<REQ, RESP>): Filter<REQ, R
   }
 }
 
-fun <REQ, RESP> combineFilters(current: Filter<REQ, RESP>?, filter: Filter<REQ, RESP>): Filter<REQ, RESP>? {
+/**
+ * Combine filters by wrapping the [filter] on the [current] filter, which means the [filter] get called first, then the [current] filter.
+ */
+fun <REQ, RESP> combineFilters(current: Filter<REQ, RESP>?, filter: Filter<REQ, RESP>?): Filter<REQ, RESP>? {
   return current?.let { cur ->
-    { req, next -> cur(req) { filter(it, next) } }
+    if (filter != null) {
+      { req, next -> filter(req) { cur(it, next) } }
+    } else {
+      cur
+    }
   } ?: filter
 }
 

@@ -6,12 +6,15 @@ import io.kotest.matchers.shouldBe
 import io.vertx.core.http.HttpVersion
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import java.net.URL
 
 class HttpFilterSpec : FunSpec() {
   private val logger = KotlinLogging.logger {}
-  private val server = server(8550) {
-    http {
+  private val server = httpServer(8550) {
+    options {
+      isSsl = false
+    }
+
+    router {
       // a filter to track response time
       filter { req, next ->
         val start = System.currentTimeMillis()
@@ -23,13 +26,14 @@ class HttpFilterSpec : FunSpec() {
 
       // request handler with it's own filter
       get("/ping", filtered({
-        response("pong")
+        response(body = "pong")
       }, { req, next ->
         logger.info { "ping with it's own filter" }
         next(req)
       }) )
 
-      router("/sub") {
+
+      subRouter("/sub") {
         // a filter to verify the authentication header must be available
         filter { req, next ->
           if (req.headers["authentication"] == null) throw IllegalArgumentException("Authentication header is missing")
@@ -37,15 +41,17 @@ class HttpFilterSpec : FunSpec() {
         }
 
         get("/ping") {
-          response("pong")
+          response(body = "pong")
         }
       }
     }
   }
 
-  private val client = client {
-    defaultPort = 8550
-    protocolVersion = HttpVersion.HTTP_2
+  private val client = httpClient {
+    options {
+      defaultPort = 8550
+      protocolVersion = HttpVersion.HTTP_2
+    }
 
     // a filter to set authentication header in request
     filter { req, next ->
@@ -64,8 +70,10 @@ class HttpFilterSpec : FunSpec() {
   }
 
   // a client doesn't have authentication header injected
-  private val clientNoAuth = client {
-    defaultPort = 8550
+  private val clientNoAuth = httpClient {
+    options {
+      defaultPort = 8550
+    }
   }
 
   override fun beforeSpec(spec: Spec) = runBlocking {
@@ -85,7 +93,7 @@ class HttpFilterSpec : FunSpec() {
       }
 
       test("/sub/ping works with authentication header from filter") {
-        val filteredClient = clientNoAuth.filtered { req, next ->
+        val filteredClient = clientNoAuth.withFilter { req, next ->
           req.headers["authentication"] = "mocked-authentication"
           next(req)
         }
