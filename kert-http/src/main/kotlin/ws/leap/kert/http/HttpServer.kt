@@ -12,21 +12,27 @@ internal data class RouterDef(
   val configure: HttpRouterBuilder.() -> Unit
 )
 
-class HttpServerBuilder(private val port: Int) {
+interface HttpServerBuilderDsl {
+  fun options(configure: HttpServerOptions.() -> Unit)
+  fun filter(filter: HttpServerFilter)
+  fun router(exceptionHandler: CoroutineExceptionHandler? = null, configure: HttpRouterDsl.() -> Unit)
+}
+
+class HttpServerBuilder(private val port: Int): HttpServerBuilderDsl {
   private val options = HttpServerOptions()
   private val filters = mutableListOf<HttpServerFilter>()
   private val routers = mutableListOf<RouterDef>()
   var exceptionHandler: CoroutineExceptionHandler = defaultHttpExceptionHandler
 
-  fun options(configure: HttpServerOptions.() -> Unit) {
+  override fun options(configure: HttpServerOptions.() -> Unit) {
     configure(options)
   }
 
-  fun filter(filter: HttpServerFilter) {
+  override fun filter(filter: HttpServerFilter) {
     filters.add(filter)
   }
 
-  fun router(exceptionHandler: CoroutineExceptionHandler? = null, configure: HttpRouterBuilder.() -> Unit) {
+  override fun router(exceptionHandler: CoroutineExceptionHandler?, configure: HttpRouterDsl.() -> Unit) {
     routers.add(RouterDef(exceptionHandler, configure))
   }
 
@@ -94,7 +100,7 @@ class HttpServer(private val port: Int, private val options: HttpServerOptions, 
   }
 }
 
-fun httpServer(port: Int, configure: HttpServerBuilder.() -> Unit): HttpServer {
+fun httpServer(port: Int, configure: HttpServerBuilderDsl.() -> Unit): HttpServer {
   val builder = HttpServerBuilder(port)
   configure(builder)
   return builder.build()

@@ -3,6 +3,7 @@ package ws.leap.kert.rest
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.vertx.core.http.HttpMethod
 import ws.leap.kert.http.HttpRouterBuilder
+import ws.leap.kert.http.HttpRouterDsl
 import ws.leap.kert.http.HttpServerBuilder
 import ws.leap.kert.http.response
 
@@ -13,7 +14,7 @@ fun HttpServerBuilder.rest(mapper: ObjectMapper, configure: RestRouterConfigurat
   }
 }
 
-class RestRouterConfigurator(val mapper: ObjectMapper, val underlying: HttpRouterBuilder) {
+class RestRouterConfigurator(val mapper: ObjectMapper, val underlying: HttpRouterDsl) {
   inline fun <reified REQ, RESP> route(method: HttpMethod, path: String, noinline handler: suspend (REQ) -> RESP) {
     underlying.call(method, path) { req ->
       val requestJson = req.body().toString("utf8")

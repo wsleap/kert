@@ -31,7 +31,7 @@ val defaultGrpcExceptionHandler = CoroutineExceptionHandler { context, exception
   }
 }
 
-fun HttpServerBuilder.grpc(configure: GrpcServerBuilder.() -> Unit) {
+fun HttpServerBuilderDsl.grpc(configure: GrpcServerBuilder.() -> Unit) {
   router(defaultGrpcExceptionHandler) {
     val builder = GrpcServerBuilder(this)
     configure(builder)
@@ -40,7 +40,7 @@ fun HttpServerBuilder.grpc(configure: GrpcServerBuilder.() -> Unit) {
 }
 
 // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
-class GrpcServerBuilder(private val httpRouterBuilder: HttpRouterBuilder) {
+class GrpcServerBuilder(private val httpRouterBuilder: HttpRouterDsl) {
   private val registry = ServiceRegistry()
   private val interceptors = mutableListOf<GrpcInterceptor>()
 

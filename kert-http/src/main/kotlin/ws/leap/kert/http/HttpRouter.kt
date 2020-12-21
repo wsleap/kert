@@ -114,6 +114,9 @@ open class HttpRouterBuilder(internal val underlying: Router,
         val response = filter?.let { it(request, handler) } ?: handler(request)
         val vertxResponse = routingContext.response()
 
+        // copy status code
+        vertxResponse.statusCode = response.statusCode
+
         // copy headers
         vertxResponse.headers().addAll(response.headers)
         vertxResponse.isChunked = response.chunked()

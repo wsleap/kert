@@ -48,15 +48,20 @@ interface HttpClient {
   val protocolVersion: HttpVersion
 }
 
-class HttpClientBuilder {
+interface HttpClientBuilderDsl {
+  fun options(configure: HttpClientOptions.() -> Unit)
+  fun filter(filter: HttpClientFilter)
+}
+
+class HttpClientBuilder: HttpClientBuilderDsl {
   private val filters = mutableListOf<HttpClientFilter>()
   private val options = HttpClientOptions()
 
-  fun options(configure: HttpClientOptions.() -> Unit) {
+  override fun options(configure: HttpClientOptions.() -> Unit) {
     configure(options)
   }
 
-  fun filter(filter: HttpClientFilter) {
+  override fun filter(filter: HttpClientFilter) {
     filters.add(filter)
   }
 
@@ -67,7 +72,7 @@ class HttpClientBuilder {
   }
 }
 
-fun httpClient(configure: (HttpClientBuilder.() -> Unit)? = null): HttpClient {
+fun httpClient(configure: (HttpClientBuilderDsl.() -> Unit)? = null): HttpClient {
   val builder = HttpClientBuilder()
   configure?.let { it(builder) }
   return builder.build()
