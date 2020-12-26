@@ -8,5 +8,5 @@ object Deps {
   const val grpcJavaVersion = "1.33.0"
   const val logbackVersion = "1.2.1"
   const val kotestVersion = "4.2.4"
-  const val vertxVersion = "4.0.0.CR2"
+  const val vertxVersion = "4.0.0"
 }

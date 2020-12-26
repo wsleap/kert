@@ -2,6 +2,7 @@ package ws.leap.kert.grpc
 
 import io.grpc.Status
 import io.vertx.core.buffer.Buffer
+import io.vertx.core.http.HttpHeaders
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpVersion
 import io.vertx.core.http.impl.headers.HeadersMultiMap
@@ -11,20 +12,27 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import ws.leap.kert.http.*
+import java.net.URLEncoder
 
 private val grpcExceptionLogger = KotlinLogging.logger {}
 val defaultGrpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
   val method = context[GrpcContext]?.method?.fullMethodName ?: "unknown"
-  grpcExceptionLogger.warn(exception) { "GRPC call failed, method=$method" }
+  grpcExceptionLogger.warn("GRPC call failed: method=$method, exception=${exception.javaClass.name}")
 
   val routingContext = context[VertxRoutingContext]?.routingContext
     ?: throw IllegalStateException("Routing context is not available on coroutine context")
   val response = routingContext.response()
   if (!response.ended()) {
     try {
+      // if content type hasn't been set
+      if (!response.headWritten()) {
+        response.putHeader(HttpHeaders.CONTENT_TYPE, Constants.contentTypeGrpcProto)
+      }
+      // grpc-status and grpc-message trailers
       val status = Status.fromThrowable(exception)
       response.putTrailer(Constants.grpcStatus, status.code.value().toString())
-      response.putTrailer(Constants.grpcMessage, status.description!!.removePrefix("${status.code}: "))
+      val grpcMessage = URLEncoder.encode(status.description!!.removePrefix("${status.code}: "), "utf8")
+      response.putTrailer(Constants.grpcMessage, grpcMessage)
     } finally {
       response.end()
     }
