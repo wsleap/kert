@@ -11,7 +11,7 @@ data class GrpcContext(val method: MethodDescriptor<*, *>): AbstractCoroutineCon
   companion object Key : CoroutineContext.Key<GrpcContext>
 }
 
-data class GrpcStream<T>(
+data class GrpcStream<out T>(
   val metadata: MultiMap,
   val messages: Flow<T>,
 )
@@ -31,6 +31,10 @@ interface GrpcInterceptor {
                                           req: GrpcRequest<REQ>,
                                           next: GrpcHandler<REQ, RESP>): GrpcResponse<RESP>
 }
+
+//typealias GrpcInterceptor = suspend (method: MethodDescriptor<*, *>,
+//                                          req: GrpcRequest<*>,
+//                                          next: GrpcHandler<*, *>) -> GrpcResponse<*>
 
 typealias GrpcCallHandler<REQ, RESP> = Handler<Flow<REQ>, Flow<RESP>>
 typealias GrpcServerCallHandler<REQ, RESP> = GrpcCallHandler<REQ, RESP>

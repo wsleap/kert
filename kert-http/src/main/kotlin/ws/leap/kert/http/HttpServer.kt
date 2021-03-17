@@ -58,7 +58,7 @@ internal class ServerVerticle(private val port: Int, private val options: HttpSe
   }
 
   override fun deploymentID(): String {
-    return "kettle-http"
+    return "kert-http"
   }
 
   override fun init(vertx: Vertx, context: Context) {

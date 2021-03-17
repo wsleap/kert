@@ -69,6 +69,7 @@ allprojects {
 
     withType<KotlinCompile> {
       kotlinOptions {
+        useIR = true
         jvmTarget = "1.8"
         freeCompilerArgs = listOf("-Xuse-experimental=kotlin.Experimental")
       }
