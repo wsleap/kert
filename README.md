@@ -58,6 +58,12 @@ val client = httpClient {
     defaultPort = 8551
     protocolVersion = HttpVersion.HTTP_2
   }
+
+  // a client side filter to set authorization header in request
+  filter { req, next ->
+    req.headers["authorization"] = "my-authorization-header"
+    next(req)
+  }
 }
 client.get("ping")
 
