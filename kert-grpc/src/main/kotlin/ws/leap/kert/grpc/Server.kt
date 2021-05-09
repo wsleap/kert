@@ -15,11 +15,12 @@ import ws.leap.kert.http.*
 
 private val grpcExceptionLogger = KotlinLogging.logger {}
 val defaultGrpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
-  val method = context[GrpcContext]?.method?.fullMethodName ?: "unknown"
-  grpcExceptionLogger.warn("GRPC call failed: method=$method, exception=${exception.javaClass.name}")
-
   val routingContext = context[VertxRoutingContext]?.routingContext
     ?: throw IllegalStateException("Routing context is not available on coroutine context")
+
+  val method = routingContext.request().path().removePrefix("/")
+  grpcExceptionLogger.warn("GRPC call failed: method=$method, exception=${exception.javaClass.name}")
+
   val response = routingContext.response()
   if (!response.ended()) {
     try {
@@ -30,7 +31,7 @@ val defaultGrpcExceptionHandler = CoroutineExceptionHandler { context, exception
       // grpc-status and grpc-message trailers
       val status = Status.fromThrowable(exception)
       response.putTrailer(Constants.grpcStatus, status.code.value().toString())
-      val message = status.code.toString() + (status.description?.let { ": $it" } ?: "")
+      val message = status.description ?: ""
       response.putTrailer(Constants.grpcMessage, message)
     } finally {
       response.end()

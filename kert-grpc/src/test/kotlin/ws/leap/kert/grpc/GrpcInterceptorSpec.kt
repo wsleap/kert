@@ -4,10 +4,8 @@ import io.grpc.MethodDescriptor
 import io.grpc.StatusException
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.DoNotParallelize
-import io.kotest.core.spec.Spec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import ws.leap.kert.test.EchoGrpcKt
 import ws.leap.kert.test.EchoReq
 
@@ -32,9 +30,6 @@ class GrpcInterceptorSpec : GrpcSpec() {
 
     service(EchoServiceImpl())
   }
-
-  override fun beforeSpec(spec: Spec) = runBlocking { server.start() }
-  override fun afterSpec(spec: Spec) = runBlocking { server.stop() }
 
   private val stub = EchoGrpcKt.stub(client)
   private val stubWithAuth = stub.intercepted(object: GrpcInterceptor {
