@@ -6,6 +6,6 @@ object Deps {
   const val kotlinCoroutineVersion = "1.5.0-RC"
   const val protobufVersion = "3.15.8"
   const val grpcJavaVersion = "1.37.0"
-  const val kotestVersion = "4.4.3"
+  const val kotestVersion = "4.5.0"
   const val vertxVersion = "4.0.3"
 }
