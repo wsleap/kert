@@ -35,39 +35,41 @@ ghz --insecure -c 100 -z 30s --connections 100 \
   0.0.0.0:8550
 
 Summary:
-  Count:	2652162
+  Count:	2923518
   Total:	30.00 s
-  Slowest:	37.28 ms
-  Fastest:	0.09 ms
-  Average:	1.04 ms
-  Requests/sec:	88399.48
+  Slowest:	29.55 ms
+  Fastest:	0.10 ms
+  Average:	0.94 ms
+  Requests/sec:	97443.68
 
 Response time histogram:
-  0.094 [1]	|
-  3.812 [972068]	|∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
-  7.530 [23734]	|∎
-  11.248 [3054]	|
-  14.966 [723]	|
-  18.684 [235]	|
-  22.403 [94]	|
-  26.121 [44]	|
-  29.839 [13]	|
-  33.557 [4]	|
-  37.275 [30]	|
+  0.097 [1]	|
+  3.043 [969170]	|∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  5.988 [26428]	|∎
+  8.933 [3386]	|
+  11.878 [662]	|
+  14.824 [196]	|
+  17.769 [115]	|
+  20.714 [30]	|
+  23.659 [6]	|
+  26.605 [3]	|
+  29.550 [3]	|
 
 Latency distribution:
-  10 % in 0.36 ms
-  25 % in 0.50 ms
-  50 % in 0.73 ms
-  75 % in 1.15 ms
-  90 % in 1.99 ms
-  95 % in 2.90 ms
-  99 % in 5.74 ms
+  10 % in 0.35 ms
+  25 % in 0.48 ms
+  50 % in 0.69 ms
+  75 % in 1.03 ms
+  90 % in 1.66 ms
+  95 % in 2.40 ms
+  99 % in 4.75 ms
 
 Status code distribution:
-  [OK]            2652118 responses
-  [Unavailable]   42 responses
-  [Canceled]      2 responses
+  [OK]            2923462 responses
+  [Unavailable]   56 responses
+
+Error distribution:
+  [56]   rpc error: code = Unavailable desc = transport is closing
  */
 fun main() {
   val server = ServerBuilder

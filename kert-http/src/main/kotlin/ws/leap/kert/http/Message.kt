@@ -15,7 +15,13 @@ interface HttpMessage {
 
   fun header(name: String): String? = headers[name]
 
-  suspend fun body(): Buffer = body.reduce { a, v -> a.appendBuffer(v) }
+  suspend fun body(): Buffer {
+    val buf = Buffer.buffer()
+    body.collect {
+      buf.appendBuffer(it)
+    }
+    return buf
+  }
 }
 
 interface HttpRequest : HttpMessage {

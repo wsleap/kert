@@ -3,13 +3,15 @@ package ws.leap.kert.http
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.vertx.core.Vertx
 import io.vertx.core.http.HttpVersion
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 class HttpFilterSpec : FunSpec() {
+  private val vertx = Vertx.vertx()
   private val logger = KotlinLogging.logger {}
-  private val server = httpServer(8550) {
+  private val server = httpServer(vertx,8550) {
     options {
       isSsl = false
     }
@@ -20,7 +22,7 @@ class HttpFilterSpec : FunSpec() {
         val start = System.currentTimeMillis()
         val resp = next(req)
         val time = System.currentTimeMillis() - start
-        logger.info { "${req.path} server response time is $time millis" }
+        logger.trace { "${req.path} server response time is $time millis" }
         resp
       }
 
@@ -28,7 +30,7 @@ class HttpFilterSpec : FunSpec() {
       get("/ping", filtered({
         response(body = "pong")
       }, { req, next ->
-        logger.info { "ping with it's own filter" }
+        logger.trace { "ping with it's own filter" }
         next(req)
       }) )
 
@@ -47,7 +49,7 @@ class HttpFilterSpec : FunSpec() {
     }
   }
 
-  private val client = httpClient {
+  private val client = httpClient(vertx) {
     options {
       defaultPort = 8550
       protocolVersion = HttpVersion.HTTP_2
@@ -64,13 +66,13 @@ class HttpFilterSpec : FunSpec() {
       val start = System.currentTimeMillis()
       val resp = next(req)
       val time = System.currentTimeMillis() - start
-      logger.info { "${req.uri} client response time is $time millis" }
+      logger.trace { "${req.uri} client response time is $time millis" }
       resp
     }
   }
 
   // a client doesn't have authentication header injected
-  private val clientNoAuth = httpClient {
+  private val clientNoAuth = httpClient(vertx) {
     options {
       defaultPort = 8550
     }

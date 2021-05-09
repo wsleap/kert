@@ -1,5 +1,6 @@
 package ws.leap.kert.http
 
+import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
@@ -8,22 +9,26 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
-fun httpTestServer(): HttpServer = httpServer(8550) {
+private fun createHttpServer(vertx: Vertx, port: Int): HttpServer = httpServer(vertx, port) {
+  options {
+    isUseAlpn = true
+    isSsl = false
+  }
   val logger = KotlinLogging.logger {}
 
   // global filter
   filter { req, next ->
-    logger.info { "request ${req.path} in filter1" }
+    logger.trace { "request ${req.path} in filter1" }
     val resp = next(req)
-    logger.info { "response for ${resp} in filter1" }
+    logger.trace { "response for ${resp} in filter1" }
     resp
   }
 
   router {
     filter { req, next ->
-      logger.info { "request ${req.path} in filter2" }
+      logger.trace { "request ${req.path} in filter2" }
       val resp = next(req)
-      logger.info { "response for ${resp} in filter2" }
+      logger.trace { "response for ${resp} in filter2" }
       resp
     }
 
@@ -33,10 +38,12 @@ fun httpTestServer(): HttpServer = httpServer(8550) {
     }
 
     get("/server-stream") {
+      var total = 0L
       val data = flow {
         for(i in 0 until 500) {
-          delay(1)
-          emit(Buffer.buffer(ByteArray(32 * 1024)))
+          val buf = Buffer.buffer(ByteArray(8 * 1024))
+          emit(buf)
+          logger.trace { "sent data, total=$total" }
         }
       }
 
@@ -48,10 +55,10 @@ fun httpTestServer(): HttpServer = httpServer(8550) {
       req.body.collect { data ->
         total += data.length()
         delay(1)
-        logger.info { "received data, total=$total" }
+        logger.trace { "received data, total=$total" }
       }
 
-      response()
+      response(body = total.toString())
     }
 
     post("/bidi-stream") { req ->
@@ -59,7 +66,7 @@ fun httpTestServer(): HttpServer = httpServer(8550) {
       val data = req.body.map { data ->
         total += data.length()
         delay(1)
-        logger.info { "received data, total=$total" }
+        logger.trace { "received data, total=$total" }
         data
       }
 
@@ -68,9 +75,9 @@ fun httpTestServer(): HttpServer = httpServer(8550) {
 
     subRouter("/sub") {
       filter { req, next ->
-        logger.info { "request ${req.path} in sub filter" }
+        logger.trace { "request ${req.path} in sub filter" }
         val resp = next(req)
-        logger.info { "response for ${resp} in sub filter" }
+        logger.trace { "response for ${resp} in sub filter" }
         resp
       }
 
@@ -81,8 +88,24 @@ fun httpTestServer(): HttpServer = httpServer(8550) {
   }
 }
 
-fun main(args: Array<String>) = runBlocking {
-  val server = httpTestServer()
-  server.start()
+fun createKertServer(vertx: Vertx, port: Int): TestServer {
+  val server = createHttpServer(vertx, port)
+  return object: TestServer {
+    override fun start() {
+      runBlocking {
+        server.start()
+      }
+    }
+
+    override fun stop() {
+      runBlocking {
+        server.stop()
+      }
+    }
+  }
 }
 
+fun main(args: Array<String>) = runBlocking {
+  val server = createHttpServer(Vertx.vertx(), 8000)
+  server.start()
+}

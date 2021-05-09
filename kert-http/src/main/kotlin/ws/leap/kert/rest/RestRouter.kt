@@ -2,11 +2,12 @@ package ws.leap.kert.rest
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.vertx.core.http.HttpMethod
-import ws.leap.kert.http.HttpRouterBuilder
 import ws.leap.kert.http.HttpRouterDsl
 import ws.leap.kert.http.HttpServerBuilder
 import ws.leap.kert.http.response
 
+// this is a draft, not ready to use
+// TODO use kotlin serialization instead of jackson for json?
 fun HttpServerBuilder.rest(mapper: ObjectMapper, configure: RestRouterConfigurator.() -> Unit) {
   router {
     val configurator = RestRouterConfigurator(mapper, this)

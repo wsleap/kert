@@ -1,27 +1,17 @@
 package ws.leap.kert.http
 
 import io.vertx.core.Vertx
-import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.await
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
-import io.vertx.core.http.HttpServerResponse as VHttpServerResponse
 import io.vertx.ext.web.RoutingContext as VRoutingContext
-
-private suspend fun VHttpServerResponse.write(body: Flow<Buffer>) {
-  body.collect { data ->
-    write(data).await()
-  }
-}
 
 data class VertxRoutingContext(
   val routingContext: VRoutingContext
@@ -43,7 +33,8 @@ val defaultHttpExceptionHandler = CoroutineExceptionHandler { context, exception
       response.end()
     } else {
       // head already sent, reset the connection
-      response.close()
+      response.reset()
+      // response.close()
     }
   }
 }
@@ -60,7 +51,8 @@ internal data class HandlerDef(
   val handler: HttpServerHandler
 )
 
-open class HttpRouterBuilder(internal val underlying: Router,
+open class HttpRouterBuilder(private val vertx: Vertx,
+                             internal val underlying: Router,
                              private var parentFilter: HttpServerFilter?,
                              var exceptionHandler: CoroutineExceptionHandler?): HttpRouterDsl {
   private val filters = mutableListOf<HttpServerFilter>()
@@ -90,8 +82,8 @@ open class HttpRouterBuilder(internal val underlying: Router,
 
     // configure sub routers
     for(subRouter in subRouters) {
-      val vertxRouter = Router.router(Kert.vertx)
-      val builder = HttpRouterBuilder(vertxRouter, finalFilter, subRouter.exceptionHandler ?: exceptionHandler)
+      val vertxRouter = Router.router(vertx)
+      val builder = HttpRouterBuilder(vertx, vertxRouter, finalFilter, subRouter.exceptionHandler ?: exceptionHandler)
       subRouter.configure(builder)
       builder.build()
 
@@ -109,6 +101,7 @@ open class HttpRouterBuilder(internal val underlying: Router,
   private fun registerCall(method: HttpMethod, path: String, handler: HttpServerHandler, filter: HttpServerFilter?) {
     underlying.route(method, path).handler { routingContext ->
       val request = HttpServerRequest(routingContext.request(), routingContext)
+      val context = Vertx.currentContext()
 
       GlobalScope.launch(createContext(routingContext)) {
         val response = filter?.let { it(request, handler) } ?: handler(request)
@@ -122,7 +115,7 @@ open class HttpRouterBuilder(internal val underlying: Router,
         vertxResponse.isChunked = response.chunked()
 
         // write body
-        vertxResponse.write(response.body)
+        write(context, response.body, vertxResponse)
 
         // write trailers
         vertxResponse.trailers().addAll(response.trailers())

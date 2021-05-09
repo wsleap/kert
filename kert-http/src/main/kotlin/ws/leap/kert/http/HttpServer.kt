@@ -18,7 +18,7 @@ interface HttpServerBuilderDsl {
   fun router(exceptionHandler: CoroutineExceptionHandler? = null, configure: HttpRouterDsl.() -> Unit)
 }
 
-class HttpServerBuilder(private val port: Int): HttpServerBuilderDsl {
+class HttpServerBuilder(private val vertx: Vertx, private val port: Int): HttpServerBuilderDsl {
   private val options = HttpServerOptions()
   private val filters = mutableListOf<HttpServerFilter>()
   private val routers = mutableListOf<RouterDef>()
@@ -39,14 +39,14 @@ class HttpServerBuilder(private val port: Int): HttpServerBuilderDsl {
   fun build(): HttpServer {
     val filter = combineFilters(*filters.toTypedArray())
 
-    val vertxRouter = Router.router(Kert.vertx)
+    val vertxRouter = Router.router(vertx)
     for(router in routers) {
-      val builder = HttpRouterBuilder(vertxRouter, filter, router.exceptionHandler ?: exceptionHandler)
+      val builder = HttpRouterBuilder(vertx, vertxRouter, filter, router.exceptionHandler ?: exceptionHandler)
       router.configure(builder)
       builder.build()
     }
 
-    return HttpServer(port, options, vertxRouter)
+    return HttpServer(vertx, port, options, vertxRouter)
   }
 }
 
@@ -67,21 +67,21 @@ internal class ServerVerticle(private val port: Int, private val options: HttpSe
   }
 
   override fun start(startPromise: Promise<Void>) {
-    server.listen(port).onComplete { ar ->
+    server.listen(port) { ar ->
       if(ar.succeeded()) startPromise.complete()
       else startPromise.fail(ar.cause())
     }
   }
 
   override fun stop(stopPromise: Promise<Void>) {
-    server.close().onComplete { ar ->
+    server.close { ar ->
       if(ar.succeeded()) stopPromise.complete()
       else stopPromise.fail(ar.cause())
     }
   }
 }
 
-class HttpServer(private val port: Int, private val options: HttpServerOptions, private val router: Router) {
+class HttpServer(private val vertx: Vertx, private val port: Int, private val options: HttpServerOptions, private val router: Router) {
   private var deployId: String? = null
 
   suspend fun start() {
@@ -89,19 +89,25 @@ class HttpServer(private val port: Int, private val options: HttpServerOptions, 
 
     val desiredInstances = VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE
     val deploymentOptions = DeploymentOptions().setInstances(desiredInstances)
-    deployId = Kert.vertx.deployVerticle({ ServerVerticle(port, options, router) }, deploymentOptions).await()
+    deployId = vertx.deployVerticle({ ServerVerticle(port, options, router) }, deploymentOptions).await()
   }
 
   suspend fun stop() {
     deployId?.let {
-      Kert.vertx.undeploy(it).await()
+      vertx.undeploy(it).await()
       deployId = null
     }
   }
 }
 
+fun httpServer(vertx: Vertx, port: Int, configure: HttpServerBuilderDsl.() -> Unit): HttpServer {
+  val builder = HttpServerBuilder(vertx, port)
+  configure(builder)
+  return builder.build()
+}
+
 fun httpServer(port: Int, configure: HttpServerBuilderDsl.() -> Unit): HttpServer {
-  val builder = HttpServerBuilder(port)
+  val builder = HttpServerBuilder(Kert.vertx, port)
   configure(builder)
   return builder.build()
 }

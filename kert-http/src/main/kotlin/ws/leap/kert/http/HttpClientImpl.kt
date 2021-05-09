@@ -7,7 +7,10 @@ import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
 import kotlin.coroutines.coroutineContext
+
+private val logger = KotlinLogging.logger {}
 
 internal class HttpClientImpl (private val underlying: io.vertx.core.http.impl.HttpClientImpl,
                                private val filters: HttpClientFilter? = null,
@@ -42,6 +45,7 @@ internal class HttpClientImpl (private val underlying: io.vertx.core.http.impl.H
     val scope = CoroutineScope(coroutineContext)
 
     underlying.request(requestOptions(request)) { ar ->
+      logger.debug { "created request" }
       if (ar.succeeded()) {
         val vertxRequest = ar.result()
         val vertxContext = Vertx.currentContext()
@@ -52,7 +56,7 @@ internal class HttpClientImpl (private val underlying: io.vertx.core.http.impl.H
         // start send request body
         scope.launch(vertxContext.dispatcher()) {
           try {
-            vertxRequest.write(request.body)
+            write(vertxContext, request.body, vertxRequest)
             vertxRequest.end().await()
           } catch (t: Throwable) {
             // send request body failed
@@ -67,7 +71,7 @@ internal class HttpClientImpl (private val underlying: io.vertx.core.http.impl.H
           }
         }
       } else {
-        // start request falied
+        // start request failed
         responseDeferred.completeExceptionally(ar.cause())
       }
     }

@@ -1,21 +1,11 @@
 package ws.leap.kert.http
 
 import io.vertx.core.MultiMap
-import io.vertx.core.buffer.Buffer
+import io.vertx.core.Vertx
 import io.vertx.core.http.HttpClientOptions
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpVersion
-import io.vertx.kotlin.coroutines.await
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import java.net.URL
-import io.vertx.core.http.HttpClientRequest as VHttpClientRequest
-
-suspend fun VHttpClientRequest.write(body: Flow<Buffer>) {
-  body.collect { data ->
-    write(data).await()
-  }
-}
 
 data class RequestOptions(
   val ssl: Boolean,
@@ -53,7 +43,7 @@ interface HttpClientBuilderDsl {
   fun filter(filter: HttpClientFilter)
 }
 
-class HttpClientBuilder: HttpClientBuilderDsl {
+class HttpClientBuilder(private val vertx: Vertx): HttpClientBuilderDsl {
   private val filters = mutableListOf<HttpClientFilter>()
   private val options = HttpClientOptions()
 
@@ -67,13 +57,18 @@ class HttpClientBuilder: HttpClientBuilderDsl {
 
   fun build(): HttpClient {
     val filter = combineFilters(*filters.toTypedArray())
-    val vertxClient = Kert.vertx.createHttpClient(options) as io.vertx.core.http.impl.HttpClientImpl
+    val vertxClient = vertx.createHttpClient(options) as io.vertx.core.http.impl.HttpClientImpl
     return HttpClientImpl(vertxClient, filter)
   }
 }
 
-fun httpClient(configure: (HttpClientBuilderDsl.() -> Unit)? = null): HttpClient {
-  val builder = HttpClientBuilder()
+fun httpClient(vertx: Vertx, configure: (HttpClientBuilderDsl.() -> Unit)? = null): HttpClient {
+  val builder = HttpClientBuilder(vertx)
   configure?.let { it(builder) }
   return builder.build()
+}
+
+
+fun httpClient(configure: (HttpClientBuilderDsl.() -> Unit)? = null): HttpClient {
+  return httpClient(Kert.vertx, configure)
 }

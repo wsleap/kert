@@ -1,49 +1,27 @@
 package ws.leap.kert.grpc
 
-import io.kotest.core.spec.Spec
-import io.kotest.core.spec.style.FunSpec
+import io.kotest.core.spec.DoNotParallelize
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.vertx.core.http.HttpVersion
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import ws.leap.kert.http.httpServer
-import ws.leap.kert.http.httpClient
 import ws.leap.kert.test.EchoCountReq
 import ws.leap.kert.test.EchoGrpcKt
 import ws.leap.kert.test.EchoReq
 
-class GrpcBasicSpec : FunSpec() {
-  val logger = KotlinLogging.logger {}
-  private val server = httpServer(8551) {
-    grpc {
-      service(EchoServiceImpl())
-    }
+private val logger = KotlinLogging.logger {}
+
+@DoNotParallelize
+class GrpcBasicSpec : GrpcSpec() {
+  override fun configureServer(builder: GrpcServerBuilder) {
+    builder.service(EchoServiceImpl())
   }
 
-  private val client = httpClient {
-    options {
-      protocolVersion = HttpVersion.HTTP_2
-      defaultPort = 8551
-    }
-  }
   private val stub = EchoGrpcKt.stub(client)
-
-  override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
-    server.start()
-
-    // TODO client-stream and bidi-stream will fail (if run the case only)
-    stub.unary(EchoReq.newBuilder().setId(1).setValue("hello").build())
-  }
-
-  override fun afterSpec(spec: Spec) = runBlocking {
-    server.stop()
-  }
 
   init {
     context("Grpc server/client") {
@@ -58,7 +36,7 @@ class GrpcBasicSpec : FunSpec() {
         val req = EchoCountReq.newBuilder().setCount(EchoTest.streamSize).build()
         val resp = stub.serverStreaming(req)
         val respMsgs = resp.map { msg ->
-          logger.info { "Client received id=${msg.id}" }
+          logger.trace { "Client received id=${msg.id}" }
           msg
         }.toList()
         respMsgs shouldHaveSize EchoTest.streamSize
@@ -69,7 +47,7 @@ class GrpcBasicSpec : FunSpec() {
           for(i in 0 until EchoTest.streamSize) {
             val msg = EchoReq.newBuilder().setId(i).setValue(EchoTest.message).build()
             emit(msg)
-            logger.info { "Client sent id=${msg.id}" }
+            logger.trace { "Client sent id=${msg.id}" }
             delay(1)
           }
         }
@@ -83,7 +61,7 @@ class GrpcBasicSpec : FunSpec() {
           for(i in 0 until EchoTest.streamSize) {
             val msg = EchoReq.newBuilder().setId(i).setValue(EchoTest.message).build()
             emit(msg)
-            logger.info { "Client sent id=${msg.id}" }
+            logger.trace { "Client sent id=${msg.id}" }
             delay(1)
           }
         }
@@ -92,7 +70,7 @@ class GrpcBasicSpec : FunSpec() {
         var count = 0
         resp.collect { msg ->
           count++
-          logger.info { "Client received id=${msg.id}" }
+          logger.trace { "Client received id=${msg.id}" }
         }
         count shouldBe EchoTest.streamSize
       }

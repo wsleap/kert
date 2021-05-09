@@ -7,9 +7,7 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServerRequest
 import io.vertx.core.http.HttpVersion
 import io.vertx.ext.web.RoutingContext
-import io.vertx.kotlin.coroutines.toChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.consumeAsFlow
 
 class HttpServerRequest(private val underlying: HttpServerRequest, private val routingContext: RoutingContext): HttpRequest {
   private val context = Vertx.currentContext() ?: throw IllegalStateException("Request must be created on vertx context")
@@ -17,7 +15,7 @@ class HttpServerRequest(private val underlying: HttpServerRequest, private val r
   override val method: HttpMethod = underlying.method()
   override val uri: String = underlying.uri()
   override val headers: MultiMap = underlying.headers()
-  override val body: Flow<Buffer> = underlying.toChannel(context).consumeAsFlow()
+  override val body: Flow<Buffer> = underlying.asFlow(context)
 
   val params: MultiMap = underlying.params()
   val path: String = underlying.path()

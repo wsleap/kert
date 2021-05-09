@@ -15,7 +15,7 @@ fun Project.librarySupport() {
     "api"("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Deps.kotlinCoroutineVersion}")
     "implementation"("org.slf4j:slf4j-api:1.7.25")
 
-    "dokkaHtmlPlugin"("org.jetbrains.dokka:kotlin-as-java-plugin:1.4.20")
+    "dokkaHtmlPlugin"("org.jetbrains.dokka:kotlin-as-java-plugin:1.4.32")
   }
 
   val sourceSets = extensions.getByName("sourceSets") as SourceSetContainer

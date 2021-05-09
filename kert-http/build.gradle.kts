@@ -12,4 +12,6 @@ dependencies {
   api("io.vertx:vertx-lang-kotlin-coroutines:${Deps.vertxVersion}")
 
   api("com.fasterxml.jackson.core:jackson-databind:2.11.1")
+
+  testImplementation("io.vertx:vertx-web-client:${Deps.vertxVersion}")
 }

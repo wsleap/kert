@@ -7,7 +7,6 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.impl.headers.HeadersMultiMap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import java.net.URI
 import java.net.URL
 
 data class HttpClientRequest internal constructor(

@@ -14,19 +14,6 @@ data class HttpServerResponse internal constructor(
   override val headers: MultiMap = HeadersMultiMap(),
   override val body: Flow<Buffer> = emptyFlow(),
   override val trailers: () -> MultiMap = { HeadersMultiMap() }): HttpResponse {
-//  init {
-//    contentType?.let {
-//      headers[HttpHeaders.CONTENT_TYPE] = it
-//    }
-//
-//    if(contentLength != null) {
-//      headers[HttpHeaders.CONTENT_LENGTH] = contentLength.toString()
-//    } else {
-//      chunked = true
-//    }
-//
-//    statusCode?.let { this.statusCode = it }
-//  }
 }
 
 fun response(statusCode: Int = 200, headers: MultiMap? = null) =

@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import ws.leap.kert.http.*
-import java.net.URLEncoder
 
 private val grpcExceptionLogger = KotlinLogging.logger {}
 val defaultGrpcExceptionHandler = CoroutineExceptionHandler { context, exception ->
@@ -31,8 +30,8 @@ val defaultGrpcExceptionHandler = CoroutineExceptionHandler { context, exception
       // grpc-status and grpc-message trailers
       val status = Status.fromThrowable(exception)
       response.putTrailer(Constants.grpcStatus, status.code.value().toString())
-      val grpcMessage = URLEncoder.encode(status.description!!.removePrefix("${status.code}: "), "utf8")
-      response.putTrailer(Constants.grpcMessage, grpcMessage)
+      val message = status.code.toString() + (status.description?.let { ": $it" } ?: "")
+      response.putTrailer(Constants.grpcMessage, message)
     } finally {
       response.end()
     }

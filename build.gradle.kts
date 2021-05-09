@@ -10,6 +10,7 @@ plugins {
   `maven-publish`
   id("com.github.ben-manes.versions").version("0.20.0")
   id("com.adarshr.test-logger").version("2.1.1")
+  id("io.kotest") version "0.3.7"
 }
 
 allprojects {
@@ -37,9 +38,11 @@ allprojects {
   dependencies {
     implementation("io.github.microutils:kotlin-logging:1.12.0")
 
+    testImplementation("io.kotest:kotest-framework-engine-jvm:${Deps.kotestVersion}")
     testImplementation("io.kotest:kotest-runner-junit5-jvm:${Deps.kotestVersion}")
     testImplementation("io.kotest:kotest-assertions-core-jvm:${Deps.kotestVersion}")
-    testImplementation("org.slf4j:slf4j-simple:1.7.25")
+    testImplementation("ch.qos.logback:logback-classic:1.2.3")
+    // testImplementation("org.slf4j:slf4j-simple:1.7.25")
   }
 
   sourceSets {
