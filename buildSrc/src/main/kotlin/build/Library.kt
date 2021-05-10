@@ -9,13 +9,21 @@ import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.plugins.signing.SigningExtension
 
+/**
+ * Config the project as a library.
+ * It adds Kotlin dependency, and publishing support.
+ */
 fun Project.librarySupport() {
-  dependencies {
-    "api"(kotlin("stdlib-jdk8"))
-    "api"("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Deps.kotlinCoroutineVersion}")
-    "implementation"("org.slf4j:slf4j-api:1.7.25")
+  val api by configurations
+  val implementation by configurations
+  val dokkaHtmlPlugin by configurations
 
-    "dokkaHtmlPlugin"("org.jetbrains.dokka:kotlin-as-java-plugin:1.4.32")
+  dependencies {
+    api(kotlin("stdlib-jdk8"))
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Deps.kotlinCoroutineVersion}")
+    implementation("org.slf4j:slf4j-api:1.7.25")
+
+    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.4.32")
   }
 
   val sourceSets = extensions.getByName("sourceSets") as SourceSetContainer

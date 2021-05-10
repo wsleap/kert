@@ -26,9 +26,14 @@ private fun goOs(os: String): String {
   }
 }
 
-fun Project.pluginSupport(pluginName: String) {
+/**
+ * Configure the project as a GRPC plugin.
+ * It adds support for compiling the plugin to Linux, Windows and MacOS, and publishing support.
+ */
+fun Project.grpcPluginSupport(pluginName: String) {
+  val testImplementation by configurations
   dependencies {
-    "testImplementation"(kotlin("stdlib-jdk8"))
+    testImplementation(kotlin("stdlib-jdk8"))
   }
 
   // overwrite os & arch if specified by command line
