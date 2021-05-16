@@ -1,6 +1,15 @@
 ## Publish
 Publish to Maven Central
 
+### You must have these properties in your '~/.gradle/gradle.properties'
+```properties
+ossrhUsername=<your sonatype username>
+ossrhPassword=<your sonatype password>
+signing.keyId=<sign key id>
+signing.password=<sign key password>
+signing.secretKeyRingFile=<sign key ring file> ex. "/home/<user>/.gnupg/secring.gpg"
+```
+
 ### Register project / package (one time setup)
 Create JIRA ticket at https://issues.sonatype.org/
   * Project: Community Support - Open Source Project Repository Hosting (OSSRH)
