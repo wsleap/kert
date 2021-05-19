@@ -19,19 +19,19 @@ private val logger = KotlinLogging.logger {}
 
 class EchoServiceImpl : EchoGrpcKt.EchoImplBase() {
   override suspend fun unary(req: EchoReq): EchoResp {
-    return EchoResp.newBuilder()
-      .setId(req.id)
-      .setValue(req.value)
-      .build()
+    return echoResp {
+      id = req.id
+      value = req.value
+    }
   }
 
   override suspend fun serverStreaming(req: EchoCountReq): Flow<EchoResp> {
     return flow {
       for(i in 0 until req.count) {
-        val msg = EchoResp.newBuilder()
-          .setId(i)
-          .setValue(EchoTest.message)
-          .build()
+        val msg = echoResp {
+          id = i
+          value = EchoTest.message
+        }
         emit(msg)
         logger.trace { "Server sent id=${msg.id}" }
         delay(1)
@@ -46,19 +46,17 @@ class EchoServiceImpl : EchoGrpcKt.EchoImplBase() {
       count++
     }
 
-    return EchoCountResp.newBuilder()
-      .setCount(count)
-      .build()
+    return echoCountResp { this.count = count }
   }
 
   override suspend fun bidiStreaming(req: Flow<EchoReq>): Flow<EchoResp> {
     return req.map { msg ->
       logger.trace { "Server received id=${msg.id}" }
       delay(1)
-      val respMsg = EchoResp.newBuilder()
-        .setId(msg.id)
-        .setValue(msg.value)
-        .build()
+      val respMsg = echoResp {
+        id = msg.id
+        value = msg.value
+      }
       logger.trace { "Server sent id=${respMsg.id}" }
       respMsg
     }

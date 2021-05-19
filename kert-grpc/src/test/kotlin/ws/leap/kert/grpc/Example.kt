@@ -9,6 +9,7 @@ import ws.leap.kert.http.httpServer
 import ws.leap.kert.http.response
 import ws.leap.kert.test.EchoGrpcKt
 import ws.leap.kert.test.EchoReq
+import ws.leap.kert.test.echoReq
 
 class Example {
   fun server() = runBlocking {
@@ -75,6 +76,6 @@ class Example {
 
     // grpc request
     val stub = EchoGrpcKt.stub(client)
-    stub.unary(EchoReq.newBuilder().setId(1).setValue("hello").build())
+    stub.unary(echoReq { id = 1; value = "hello" })
   }
 }

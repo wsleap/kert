@@ -21,7 +21,7 @@ class GrpcErrorSpec : GrpcSpec() {
       override suspend fun serverStreaming(req: EchoCountReq): Flow<EchoResp> {
         return flow {
           for(i in 0 until req.count / 2) {
-            val msg = EchoResp.newBuilder().setId(i).setValue(EchoTest.message).build()
+            val msg = echoResp { id = i; value = EchoTest.message }
             emit(msg)
             logger.trace { "Server sent id=${msg.id}" }
             delay(1)
@@ -44,7 +44,7 @@ class GrpcErrorSpec : GrpcSpec() {
           }
         }
 
-        return EchoCountResp.newBuilder().setCount(count).build()
+        return echoCountResp { this.count = count }
       }
 
       override suspend fun bidiStreaming(req: Flow<EchoReq>): Flow<EchoResp> {
@@ -52,10 +52,7 @@ class GrpcErrorSpec : GrpcSpec() {
         return req.map { msg ->
           logger.trace { "Server received id=${msg.id}" }
           delay(1)
-          val respMsg = EchoResp.newBuilder()
-            .setId(msg.id)
-            .setValue(msg.value)
-            .build()
+          val respMsg = echoResp { id = msg.id; value = msg.value }
           logger.trace { "Server sent id=${respMsg.id}" }
 
           count++
@@ -77,14 +74,14 @@ class GrpcErrorSpec : GrpcSpec() {
   init {
     context("Grpc should capture the errors") {
       test("unary") {
-        val req = EchoReq.newBuilder().setId(1).setValue(EchoTest.message).build()
+        val req = echoReq { id = 1; value = EchoTest.message }
         shouldThrow<StatusException> {
           stub.unary(req)
         }
       }
 
       test("server stream") {
-        val req = EchoCountReq.newBuilder().setCount(EchoTest.streamSize).build()
+        val req = echoCountReq { count = EchoTest.streamSize }
         val resp = stub.serverStreaming(req)
 
         shouldThrow<StatusException> {
@@ -98,7 +95,7 @@ class GrpcErrorSpec : GrpcSpec() {
       test("client stream") {
         val req = flow {
           for(i in 0 until EchoTest.streamSize) {
-            val msg = EchoReq.newBuilder().setId(i).setValue(i.toString()).build()
+            val msg = echoReq { id = i; value = i.toString() }
             emit(msg)
             logger.trace { "Client sent id=${msg.id}" }
             delay(1)
@@ -113,7 +110,7 @@ class GrpcErrorSpec : GrpcSpec() {
       test("bidi stream") {
         val req = flow {
           for(i in 0 until EchoTest.streamSize) {
-            val msg = EchoReq.newBuilder().setId(i).setValue(i.toString()).build()
+            val msg = echoReq { id = i; value = i.toString() }
             emit(msg)
             logger.trace { "Client sent id=${msg.id}" }
             delay(1)

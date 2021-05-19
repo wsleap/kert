@@ -7,9 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import mu.KotlinLogging
-import ws.leap.kert.test.EchoGrpcKt
-import ws.leap.kert.test.EchoReq
-import ws.leap.kert.test.EchoResp
+import ws.leap.kert.test.*
 import java.util.concurrent.atomic.AtomicInteger
 
 private val logger = KotlinLogging.logger {}
@@ -27,20 +25,23 @@ class GrpcNestedBidiSpec : GrpcSpec() {
       override suspend fun bidiStreaming(req: Flow<EchoReq>): Flow<EchoResp> {
         return flow {
           req.collect { reqMsg ->
-            val value = reqMsg.value.toInt()
+            val reqValue = reqMsg.value.toInt()
             // if the value is less than 100, double it then send it back
             // otherwise omit it
-            if (value < 100) {
+            if (reqValue < 100) {
               logger.trace { "Server: Message id=${reqMsg.id} value=${reqMsg.value} bounce" }
-              val respValue = (value * 2).toString()
-              val respMsg = EchoResp.newBuilder().setId(reqMsg.id).setValue(respValue).build()
+              val respValue = (reqValue * 2).toString()
+              val respMsg = echoResp { id = reqMsg.id; value = respValue }
               emit(respMsg)
             } else {
               logger.trace { "Server: Message id=${reqMsg.id} value=${reqMsg.value} omitted" }
               omittedCount.incrementAndGet()
               if(omittedCount.get() == messageNum) {
                 // all messages are omitted, end the loop
-                emit(EchoResp.newBuilder().setId(-1).setValue("end").build())
+                emit(echoResp {
+                  id = -1
+                  value = "end"
+                })
               }
             }
           }
@@ -60,7 +61,7 @@ class GrpcNestedBidiSpec : GrpcSpec() {
         val req = flow {
           for(i in 1 .. messageNum) {
             // send initial 10 messages
-            val msg = EchoReq.newBuilder().setId(i).setValue(i.toString()).build()
+            val msg = echoReq { id = i; value = i.toString() }
             emit(msg)
             logger.trace { "Client sent id=${msg.id} value=${msg.value}" }
           }
@@ -68,7 +69,7 @@ class GrpcNestedBidiSpec : GrpcSpec() {
           // client always bounce the message back to server
           for(resp in channel) {
             logger.trace { "Client: Message id=${resp.id} value=${resp.value} bounce" }
-            val msg = EchoReq.newBuilder().setId(resp.id).setValue(resp.value).build()
+            val msg = echoReq { id = resp.id; value = resp.value }
             emit(msg)
           }
         }

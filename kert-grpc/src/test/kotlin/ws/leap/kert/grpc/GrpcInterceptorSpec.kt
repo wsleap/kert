@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.map
 import ws.leap.kert.test.EchoGrpcKt
 import ws.leap.kert.test.EchoReq
+import ws.leap.kert.test.echoReq
 
 @DoNotParallelize
 class GrpcInterceptorSpec : GrpcSpec() {
@@ -44,17 +45,17 @@ class GrpcInterceptorSpec : GrpcSpec() {
   init {
     test("should fail if no authentication") {
       shouldThrow<StatusException> {
-        stub.unary(EchoReq.newBuilder().setId(1).setValue("good").build())
+        stub.unary(echoReq { id = 1; value = "good" })
       }
     }
     test("should succeed if message is good") {
-      val resp = stubWithAuth.unary(EchoReq.newBuilder().setId(1).setValue("good").build())
+      val resp = stubWithAuth.unary(echoReq { id = 1; value = "good" })
       resp.value shouldBe "good"
     }
 
     test("should fail if message is not-good") {
       shouldThrow<StatusException> {
-        stubWithAuth.unary(EchoReq.newBuilder().setId(1).setValue("not-good").build())
+        stubWithAuth.unary(echoReq { id = 1; value = "not-good" })
       }
     }
   }

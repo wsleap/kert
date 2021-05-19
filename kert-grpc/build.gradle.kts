@@ -14,6 +14,7 @@ dependencies {
 
   testImplementation("io.grpc:grpc-stub:${Deps.grpcJavaVersion}")
   testImplementation("io.grpc:grpc-netty:${Deps.grpcJavaVersion}")
+  testImplementation("com.google.protobuf:protobuf-kotlin:${Deps.protobufVersion}")
 }
 
 protobuf {
@@ -31,8 +32,11 @@ protobuf {
     }
   }
   generateProtoTasks {
-    ofSourceSet("test").forEach {
-      it.plugins {
+    ofSourceSet("test").forEach { task ->
+      task.builtins {
+        id("kotlin")
+      }
+      task.plugins {
         id("grpc-kert")
         id("grpc-java")
       }

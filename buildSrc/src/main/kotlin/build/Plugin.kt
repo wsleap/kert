@@ -69,7 +69,7 @@ fun Project.grpcPluginSupport(pluginName: String) {
       artifact = "com.google.protobuf:protoc:${Deps.protobufVersion}"
     }
     plugins {
-      id("kotlin") {
+      id("grpc-kert") {
         path = pluginPath
       }
     }
@@ -78,9 +78,9 @@ fun Project.grpcPluginSupport(pluginName: String) {
         task.dependsOn("buildPlugin")
         task.inputs.file(pluginPath)
       }
-      ofSourceSet("test").forEach {
-        it.plugins {
-          id("kotlin") {
+      ofSourceSet("test").forEach { task ->
+        task.plugins {
+          id("grpc-kert") {
             // enable this to write the input request to disk
             // option("write_input=true")
           }

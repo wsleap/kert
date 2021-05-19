@@ -9,9 +9,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import mu.KotlinLogging
-import ws.leap.kert.test.EchoCountReq
-import ws.leap.kert.test.EchoGrpcKt
-import ws.leap.kert.test.EchoReq
+import ws.leap.kert.test.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -26,14 +24,14 @@ class GrpcBasicSpec : GrpcSpec() {
   init {
     context("Grpc server/client") {
       test("unary") {
-        val req = EchoReq.newBuilder().setId(1).setValue(EchoTest.message).build()
+        val req = echoReq { id = 1; value = EchoTest.message }
         val resp = stub.unary(req)
         resp.id shouldBe 1
         resp.value shouldBe EchoTest.message
       }
 
       test("server stream") {
-        val req = EchoCountReq.newBuilder().setCount(EchoTest.streamSize).build()
+        val req = echoCountReq { count = EchoTest.streamSize }
         val resp = stub.serverStreaming(req)
         val respMsgs = resp.map { msg ->
           logger.trace { "Client received id=${msg.id}" }
@@ -45,7 +43,7 @@ class GrpcBasicSpec : GrpcSpec() {
       test("client stream") {
         val req = flow {
           for(i in 0 until EchoTest.streamSize) {
-            val msg = EchoReq.newBuilder().setId(i).setValue(EchoTest.message).build()
+            val msg = echoReq { id = i; value = EchoTest.message }
             emit(msg)
             logger.trace { "Client sent id=${msg.id}" }
             delay(1)
@@ -59,7 +57,7 @@ class GrpcBasicSpec : GrpcSpec() {
       test("bidi stream") {
         val req = flow {
           for(i in 0 until EchoTest.streamSize) {
-            val msg = EchoReq.newBuilder().setId(i).setValue(EchoTest.message).build()
+            val msg = echoReq { id = i; value = EchoTest.message }
             emit(msg)
             logger.trace { "Client sent id=${msg.id}" }
             delay(1)

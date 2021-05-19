@@ -35,7 +35,7 @@ class GrpcUnimplementedSpec : GrpcSpec() {
   init {
     context("Grpc") {
       test("unary is not implemented") {
-        val req = EchoReq.newBuilder().setId(1).setValue(EchoTest.message).build()
+        val req = echoReq { id = 1; value = EchoTest.message }
         val exception = shouldThrow<StatusException> {
           stub.unary(req)
         }
@@ -43,7 +43,7 @@ class GrpcUnimplementedSpec : GrpcSpec() {
       }
 
       test("server stream should cause DATA_LOSS") {
-        val req = EchoCountReq.newBuilder().setCount(EchoTest.streamSize).build()
+        val req = echoCountReq { count = EchoTest.streamSize }
         val exception = shouldThrow<StatusException> {
           stub.serverStreaming(req)
             .collect {}  // collect is required to raise exception from a failed flow
@@ -54,7 +54,7 @@ class GrpcUnimplementedSpec : GrpcSpec() {
       test("client stream") {
         val req = flow {
           for(i in 0 until EchoTest.streamSize) {
-            val msg = EchoReq.newBuilder().setId(i).setValue(i.toString()).build()
+            val msg = echoReq { id = i; value = i.toString() }
             emit(msg)
           }
         }
@@ -68,7 +68,7 @@ class GrpcUnimplementedSpec : GrpcSpec() {
       test("bidi stream") {
         val req = flow {
           for(i in 0 until EchoTest.streamSize) {
-            val msg = EchoReq.newBuilder().setId(i).setValue(i.toString()).build()
+            val msg = echoReq { id = i; value = i.toString() }
             emit(msg)
           }
         }

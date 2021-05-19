@@ -6,10 +6,10 @@ import ws.leap.kert.test.*
 
 class EchoServiceJavaImpl : EchoGrpc.EchoImplBase() {
   override fun unary(request: EchoReq, responseObserver: StreamObserver<EchoResp>) {
-    val response = EchoResp.newBuilder()
-      .setId(request.id)
-      .setValue(request.value)
-      .build()
+    val response = echoResp {
+      id = request.id
+      value = request.value
+    }
     responseObserver.onNext(response)
     responseObserver.onCompleted()
   }
