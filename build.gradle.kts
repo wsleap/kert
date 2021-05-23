@@ -32,7 +32,6 @@ allprojects {
 
   repositories {
     mavenLocal()
-    jcenter()
     mavenCentral()
   }
 
@@ -44,6 +43,12 @@ allprojects {
     testImplementation("io.kotest:kotest-assertions-core-jvm:${Deps.kotestVersion}")
     testImplementation("ch.qos.logback:logback-classic:1.2.3")
     // testImplementation("org.slf4j:slf4j-simple:1.7.25")
+  }
+
+  // set target jvm version, otherwise gradle will use the jdk version during compiling for "org.gradle.jvm.version" in module file
+  java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
   }
 
   sourceSets {
@@ -73,7 +78,6 @@ allprojects {
 
     withType<KotlinCompile> {
       kotlinOptions {
-        useIR = true
         jvmTarget = "1.8"
         freeCompilerArgs = listOf("-Xuse-experimental=kotlin.Experimental")
       }
