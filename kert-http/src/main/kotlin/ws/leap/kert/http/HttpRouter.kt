@@ -6,6 +6,7 @@ import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.await
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
@@ -54,7 +55,7 @@ internal data class HandlerDef(
 open class HttpRouterBuilder(private val vertx: Vertx,
                              internal val underlying: Router,
                              private var parentFilter: HttpServerFilter?,
-                             var exceptionHandler: CoroutineExceptionHandler?): HttpRouterDsl {
+                             private val exceptionHandler: CoroutineExceptionHandler?): HttpRouterDsl {
   private val filters = mutableListOf<HttpServerFilter>()
   private val subRouters = mutableListOf<SubRouterDef>()
   private val handlers = mutableListOf<HandlerDef>()
@@ -98,6 +99,7 @@ open class HttpRouterBuilder(private val vertx: Vertx,
     return context.dispatcher() + VertxRoutingContext(routingContext) + exceptionHandler()
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   private fun registerCall(method: HttpMethod, path: String, handler: HttpServerHandler, filter: HttpServerFilter?) {
     underlying.route(method, path).handler { routingContext ->
       val request = HttpServerRequest(routingContext.request(), routingContext)

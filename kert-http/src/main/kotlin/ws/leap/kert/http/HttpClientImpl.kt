@@ -64,9 +64,9 @@ internal class HttpClientImpl (private val underlying: io.vertx.core.http.impl.H
           }
         }
 
-        vertxRequest.response { ar ->
-          if(ar.succeeded()) {
-            val vertxResponse = ar.result()
+        vertxRequest.response { respResult ->
+          if(respResult.succeeded()) {
+            val vertxResponse = respResult.result()
             responseDeferred.complete(HttpClientResponse(vertxResponse, vertxContext))
           }
         }

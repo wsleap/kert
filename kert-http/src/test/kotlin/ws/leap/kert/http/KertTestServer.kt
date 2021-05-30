@@ -20,7 +20,7 @@ private fun createHttpServer(vertx: Vertx, port: Int): HttpServer = httpServer(v
   filter { req, next ->
     logger.trace { "request ${req.path} in filter1" }
     val resp = next(req)
-    logger.trace { "response for ${resp} in filter1" }
+    logger.trace { "response for $resp in filter1" }
     resp
   }
 
@@ -28,7 +28,7 @@ private fun createHttpServer(vertx: Vertx, port: Int): HttpServer = httpServer(v
     filter { req, next ->
       logger.trace { "request ${req.path} in filter2" }
       val resp = next(req)
-      logger.trace { "response for ${resp} in filter2" }
+      logger.trace { "response for $resp in filter2" }
       resp
     }
 
@@ -42,6 +42,7 @@ private fun createHttpServer(vertx: Vertx, port: Int): HttpServer = httpServer(v
       val data = flow {
         for(i in 0 until 500) {
           val buf = Buffer.buffer(ByteArray(8 * 1024))
+          total += buf.length()
           emit(buf)
           logger.trace { "sent data, total=$total" }
         }
@@ -77,7 +78,7 @@ private fun createHttpServer(vertx: Vertx, port: Int): HttpServer = httpServer(v
       filter { req, next ->
         logger.trace { "request ${req.path} in sub filter" }
         val resp = next(req)
-        logger.trace { "response for ${resp} in sub filter" }
+        logger.trace { "response for $resp in sub filter" }
         resp
       }
 
