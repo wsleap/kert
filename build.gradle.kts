@@ -8,7 +8,7 @@ plugins {
   kotlin("jvm") apply false  // Enables Kotlin Gradle plugin
   signing
   `maven-publish`
-  id("com.github.ben-manes.versions").version("0.38.0")
+  id("com.github.ben-manes.versions").version("0.39.0")
   id("com.adarshr.test-logger").version("3.0.0")
   id("io.kotest") version "0.3.8"
 }
@@ -36,7 +36,7 @@ allprojects {
   }
 
   dependencies {
-    implementation("io.github.microutils:kotlin-logging:2.0.6")
+    implementation("io.github.microutils:kotlin-logging:2.0.8")
 
     testImplementation("io.kotest:kotest-framework-engine-jvm:${Deps.kotestVersion}")
     testImplementation("io.kotest:kotest-runner-junit5-jvm:${Deps.kotestVersion}")
