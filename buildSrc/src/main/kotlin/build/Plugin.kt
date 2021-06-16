@@ -5,7 +5,7 @@ import org.gradle.kotlin.dsl.*
 import org.gradle.api.tasks.Copy
 import java.io.File
 import com.google.protobuf.gradle.*
-import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.SourceSetContainer
@@ -89,7 +89,7 @@ fun Project.grpcPluginSupport(pluginName: String) {
     }
   }
 
-  configure<JavaPluginConvention> {
+  configure<JavaPluginExtension> {
     sourceSets(closureOf<SourceSetContainer> {
       getByName("test").java.srcDir("$projectDir/gen/test/kotlin")
     })
