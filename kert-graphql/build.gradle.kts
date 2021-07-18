@@ -18,10 +18,11 @@ dependencies {
   implementation("com.fasterxml.jackson.module:jackson-module-afterburner:2.12.3")
 }
 
-graphql {
-  client {
-    endpoint = "http://localhost:8500/graphql"
-    packageName = "ws.leap.kert.graphql.example"
-    queryFiles = listOf(file("${project.projectDir}/src/test/resources/ExampleQuery.graphql"))
-  }
-}
+//graphql {
+//  client {
+//    // Gradle build fails if server is not running
+//    endpoint = "http://localhost:8500/graphql"
+//    packageName = "ws.leap.kert.graphql.example"
+//    queryFiles = listOf(file("${project.projectDir}/src/test/resources/ExampleQuery.graphql"))
+//  }
+//}
