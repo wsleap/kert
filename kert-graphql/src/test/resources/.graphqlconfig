@@ -1,0 +1,16 @@
+{
+  "_comment": "this is required by Intellij GraphQL plugin",
+  "name": "Example GraphQL Schema",
+  "schemaPath": "graphql",
+  "extensions": {
+    "endpoints": {
+      "Endpoint": {
+        "url": "http://localhost:8500/graphql",
+        "headers": {
+          "user-agent": "JS GraphQL"
+        },
+        "introspect": false
+      }
+    }
+  }
+}

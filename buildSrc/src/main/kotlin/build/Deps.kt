@@ -8,4 +8,5 @@ object Deps {
   const val grpcJavaVersion = "1.38.0"
   const val kotestVersion = "4.6.0"
   const val vertxVersion = "4.1.0"
+  const val kGraphQlVersion = "0.17.9"
 }

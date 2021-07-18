@@ -1,0 +1,7 @@
+query StudentAndFriends {
+  students(limit:2){
+    name
+    age
+    address(format: {showState:false})
+  }
+}
