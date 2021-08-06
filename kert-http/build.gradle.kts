@@ -12,5 +12,7 @@ dependencies {
   api("io.vertx:vertx-web:${Deps.vertxVersion}")
   api("io.vertx:vertx-lang-kotlin-coroutines:${Deps.vertxVersion}")
 
+  api("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:${Deps.kotlinCoroutineVersion}")
+
   testImplementation("io.vertx:vertx-web-client:${Deps.vertxVersion}")
 }

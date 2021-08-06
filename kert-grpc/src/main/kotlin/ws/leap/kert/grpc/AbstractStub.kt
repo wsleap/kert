@@ -59,12 +59,13 @@ abstract class AbstractStub<S>(
     val responseMessagesFlow = responseMessages.onCompletion { cause ->
       if (cause == null) {
         val trailers = httpResponse.trailers()
-        // fail the flow if trailer is missing or not OK
-        val statusCode = trailers[Constants.grpcStatus]?.toInt()
+        // fail the flow if grpc-status is missing, it should be either in headers or trailers
+        val statusCode = httpResponse.headers[Constants.grpcStatus]?.toInt() ?: trailers[Constants.grpcStatus]?.toInt()
           ?: throw IllegalStateException("GRPC status is missing, request=$httpRequestPath")
         val status = Status.fromCodeValue(statusCode)
         if (!status.isOk) {
-          throw status.withDescription(trailers[Constants.grpcMessage] ?: "").asException()
+          val message = httpResponse.headers[Constants.grpcMessage] ?: trailers[Constants.grpcMessage] ?: ""
+          throw status.withDescription(message).asException()
         }
       }
     }

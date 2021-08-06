@@ -24,15 +24,20 @@ val defaultGrpcExceptionHandler = CoroutineExceptionHandler { context, exception
   val response = routingContext.response()
   if (!response.ended()) {
     try {
-      // if content type hasn't been set
-      if (!response.headWritten()) {
-        response.putHeader(HttpHeaders.CONTENT_TYPE, Constants.contentTypeGrpcProto)
-      }
       // grpc-status and grpc-message trailers
       val status = Status.fromThrowable(exception)
-      response.putTrailer(Constants.grpcStatus, status.code.value().toString())
-      val message = status.description ?: ""
-      response.putTrailer(Constants.grpcMessage, message)
+      val message = status.description
+
+      // if headers haven't been sent, set grpc status in header
+      if (!response.headWritten()) {
+        response.putHeader(HttpHeaders.CONTENT_TYPE, Constants.contentTypeGrpcProto)
+        response.putHeader(Constants.grpcStatus, status.code.value().toString())
+        message?.let { response.putHeader(Constants.grpcMessage, it) }
+      } else {
+        // headers have been sent, put grpc status in trailers
+        response.putTrailer(Constants.grpcStatus, status.code.value().toString())
+        message?.let { response.putTrailer(Constants.grpcMessage, it) }
+      }
     } finally {
       response.end()
     }

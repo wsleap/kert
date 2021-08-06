@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.slf4j.MDCContext
 import mu.KotlinLogging
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -96,7 +97,7 @@ open class HttpRouterBuilder(private val vertx: Vertx,
 
   private fun createContext(routingContext: VRoutingContext): CoroutineContext {
     val context = Vertx.currentContext()
-    return context.dispatcher() + VertxRoutingContext(routingContext) + exceptionHandler()
+    return context.dispatcher() + VertxRoutingContext(routingContext) + MDCContext() + exceptionHandler()
   }
 
   @OptIn(DelicateCoroutinesApi::class)
