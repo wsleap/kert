@@ -1,6 +1,5 @@
 package ws.leap.kert.graphql
 
-import com.expediagroup.graphql.generator.SchemaGeneratorConfig
 import com.expediagroup.graphql.generator.annotations.GraphQLDescription
 import com.expediagroup.graphql.server.operations.Query
 import kotlinx.coroutines.runBlocking
@@ -32,6 +31,7 @@ class StudentQuery : Query {
   data class AddressFormat(val showZipcode: Boolean? = true, val showState: Boolean? = true)
 
   data class Student(private val id: String, val name: String, val age: Int, val gender: Gender) {
+    @Suppress("unused")
     suspend fun address(format: AddressFormat? = AddressFormat()): String {
       val showZipcode = format?.showZipcode ?: true
       val showState = format?.showState ?: true
@@ -54,7 +54,6 @@ class StudentQuery : Query {
 
 fun main() {
   val server = httpServer(8500) {
-    // grpc service
     graphql {
       playground = true
 

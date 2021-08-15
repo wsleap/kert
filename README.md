@@ -44,6 +44,18 @@ val server = httpServer(8080) {
     // register service implementation
     service(EchoServiceImpl())
   }
+
+  // GraphQL
+  graphql {
+    playground = true
+
+    schema {
+      config {
+        supportedPackages = listOf("<your package name>")
+      }
+      query(MyExampleQuery())
+    }
+  }
 }
 
 server.start()
