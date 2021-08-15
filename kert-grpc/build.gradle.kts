@@ -12,6 +12,9 @@ dependencies {
 
   api("javax.annotation:javax.annotation-api:1.3.2")
 
+  // generateTestProto needs compiler binary
+  testImplementation(project(":kert-grpc-compiler"))
+
   testImplementation("io.grpc:grpc-stub:${Deps.grpcJavaVersion}")
   testImplementation("io.grpc:grpc-netty:${Deps.grpcJavaVersion}")
   testImplementation("com.google.protobuf:protobuf-kotlin:${Deps.protobufVersion}")
