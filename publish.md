@@ -32,9 +32,9 @@ Ticket: https://issues.sonatype.org/browse/OSSRH-62510
     ```
 1. Bump version number (add SNAPSHOT back)
 
-Use this if want to check file format for the compiler
+Use this to check file format for the compiler
 ```shell
-file kert-compiler/build/exe/protoc-gen-grpc-kert
+file kert-grpc-compiler/build/exe/protoc-gen-grpc-kert
 ```
 
 ### Promote to Maven Central

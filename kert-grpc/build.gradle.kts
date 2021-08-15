@@ -24,7 +24,7 @@ protobuf {
   }
   plugins {
     id("grpc-kert") {
-      path = "$rootDir/kert-compiler/build/exe/protoc-gen-grpc-kert${Consts.exeSuffix}"
+      path = "$rootDir/kert-grpc-compiler/build/exe/protoc-gen-grpc-kert${Consts.exeSuffix}"
     }
     // generate java version for performance comparison
     id("grpc-java") {
