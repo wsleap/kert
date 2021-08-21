@@ -30,6 +30,9 @@ class Example {
 
       // grpc service
       grpc {
+        // enable server reflection
+        serverReflection = true
+
         // grpc interceptor
         interceptor( object : GrpcInterceptor {
           override suspend fun <REQ, RESP> invoke(

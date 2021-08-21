@@ -54,6 +54,8 @@ fun HttpServerBuilderDsl.grpc(configure: GrpcServerBuilder.() -> Unit) {
 
 // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 class GrpcServerBuilder(private val httpRouterBuilder: HttpRouterDsl) {
+  var serverReflection: Boolean = false
+
   private val registry = ServiceRegistry()
   private val interceptors = mutableListOf<GrpcInterceptor>()
 
@@ -65,6 +67,10 @@ class GrpcServerBuilder(private val httpRouterBuilder: HttpRouterDsl) {
   }
 
   fun build() {
+    if(serverReflection) {
+      service(ServerReflectionImpl(registry))
+    }
+
     val finalInterceptor = combineInterceptors(*interceptors.toTypedArray())
 
     for(service in registry.services()) {

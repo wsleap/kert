@@ -155,6 +155,9 @@ Error distribution:
 fun main() = runBlocking {
   val server = httpServer(8551) {
     grpc {
+      // enable server reflection
+      serverReflection = true
+
       service(EchoServiceImpl())
     }
   }

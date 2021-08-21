@@ -33,6 +33,9 @@ val server = httpServer(8080) {
 
   // grpc service
   grpc {
+    // enable server reflection
+    serverReflection = true
+
     // grpc interceptor
     interceptor( object : GrpcInterceptor {
       override suspend fun <REQ, RESP> invoke(method: MethodDescriptor<REQ, RESP>, req: GrpcRequest<REQ>, next: GrpcHandler<REQ, RESP>): GrpcResponse<RESP> {

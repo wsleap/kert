@@ -9,15 +9,15 @@ dependencies {
   api(project(":kert-http"))
   api("com.google.protobuf:protobuf-java:${Deps.protobufVersion}")
   api("io.grpc:grpc-protobuf:${Deps.grpcJavaVersion}")
+  api("com.google.protobuf:protobuf-kotlin:${Deps.protobufVersion}")
 
   api("javax.annotation:javax.annotation-api:1.3.2")
 
   // generateTestProto needs compiler binary
-  testImplementation(project(":kert-grpc-compiler"))
+  compileOnly(project(":kert-grpc-compiler"))
 
   testImplementation("io.grpc:grpc-stub:${Deps.grpcJavaVersion}")
   testImplementation("io.grpc:grpc-netty:${Deps.grpcJavaVersion}")
-  testImplementation("com.google.protobuf:protobuf-kotlin:${Deps.protobufVersion}")
 }
 
 protobuf {
@@ -35,6 +35,17 @@ protobuf {
     }
   }
   generateProtoTasks {
+    // protos used by library self
+    ofSourceSet("main").forEach { task ->
+      task.builtins {
+        id("kotlin")
+      }
+      task.plugins {
+        id("grpc-kert")
+      }
+    }
+
+    // protos used in test (grpc-java is enabled for comparison)
     ofSourceSet("test").forEach { task ->
       task.builtins {
         id("kotlin")
