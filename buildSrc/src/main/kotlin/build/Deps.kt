@@ -2,7 +2,7 @@ package build
 
 @Suppress("unused")
 object Deps {
-  const val kotlinVersion = "1.5.20"
+  const val kotlinVersion = "1.5.21"
   const val kotlinCoroutineVersion = "1.5.0"
   const val protobufVersion = "3.17.3"
   const val grpcJavaVersion = "1.38.0"
