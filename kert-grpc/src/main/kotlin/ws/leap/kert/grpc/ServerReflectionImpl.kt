@@ -48,16 +48,16 @@ class ServerReflectionImpl(private val registry: ServiceRegistry) : ServerReflec
 //    return index
   }
 
-  override suspend fun serverReflectionInfo(reqs: Flow<ServerReflectionRequest>): Flow<ServerReflectionResponse> {
+  override suspend fun serverReflectionInfo(req: Flow<ServerReflectionRequest>): Flow<ServerReflectionResponse> {
     return flow {
-      reqs.collect { req ->
-        val resp = when(req.messageRequestCase) {
-          ServerReflectionRequest.MessageRequestCase.FILE_BY_FILENAME -> getFileByName(req)
-          ServerReflectionRequest.MessageRequestCase.FILE_CONTAINING_SYMBOL -> getFileContainingSymbol(req)
-          ServerReflectionRequest.MessageRequestCase.FILE_CONTAINING_EXTENSION -> getFileContainingExtension(req)
-          ServerReflectionRequest.MessageRequestCase.ALL_EXTENSION_NUMBERS_OF_TYPE -> getAllExtensions(req)
-          ServerReflectionRequest.MessageRequestCase.LIST_SERVICES -> listServices(req)
-          else -> throw Status.UNIMPLEMENTED.withDescription("${req.messageRequestCase} is not implemented").asException()
+      req.collect { msg ->
+        val resp = when(msg.messageRequestCase) {
+          ServerReflectionRequest.MessageRequestCase.FILE_BY_FILENAME -> getFileByName(msg)
+          ServerReflectionRequest.MessageRequestCase.FILE_CONTAINING_SYMBOL -> getFileContainingSymbol(msg)
+          ServerReflectionRequest.MessageRequestCase.FILE_CONTAINING_EXTENSION -> getFileContainingExtension(msg)
+          ServerReflectionRequest.MessageRequestCase.ALL_EXTENSION_NUMBERS_OF_TYPE -> getAllExtensions(msg)
+          ServerReflectionRequest.MessageRequestCase.LIST_SERVICES -> listServices(msg)
+          else -> throw Status.UNIMPLEMENTED.withDescription("${msg.messageRequestCase} is not implemented").asException()
         }
 
         emit(resp)
