@@ -36,7 +36,7 @@ allprojects {
   }
 
   dependencies {
-    implementation("io.github.microutils:kotlin-logging:2.0.8")
+    implementation("io.github.microutils:kotlin-logging:2.0.11")
 
     testImplementation("io.kotest:kotest-framework-engine-jvm:${Deps.kotestVersion}")
     testImplementation("io.kotest:kotest-runner-junit5-jvm:${Deps.kotestVersion}")

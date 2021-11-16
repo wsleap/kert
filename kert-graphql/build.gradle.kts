@@ -9,13 +9,16 @@ description = "Kert GraphQL support"
 librarySupport()
 
 dependencies {
-  api(project(":kert-http"))
-  api("com.expediagroup:graphql-kotlin-server:4.1.1")
-  api("com.expediagroup:graphql-kotlin-client:4.1.1")
+  val graphqlKotlinVersion = "4.1.1"
+  val jacksonVersion = "2.12.3"
 
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3")
-  implementation("com.fasterxml.jackson.core:jackson-databind:2.12.3")
-  implementation("com.fasterxml.jackson.module:jackson-module-afterburner:2.12.3")
+  api(project(":kert-http"))
+  api("com.expediagroup:graphql-kotlin-server:${graphqlKotlinVersion}")
+  api("com.expediagroup:graphql-kotlin-client:${graphqlKotlinVersion}")
+
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${jacksonVersion}")
+  implementation("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+  implementation("com.fasterxml.jackson.module:jackson-module-afterburner:${jacksonVersion}")
 }
 
 //graphql {
