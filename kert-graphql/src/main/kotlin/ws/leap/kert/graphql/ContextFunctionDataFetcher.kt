@@ -38,7 +38,7 @@ class ContextFunctionDataFetcher(
         .plus(instanceParameter to instance)
 
       if (fn.isSuspend) {
-        val context: CoroutineContext = (environment.getContext<Any?>() as? CoroutineContext) ?: EmptyCoroutineContext
+        val context: CoroutineContext = environment.graphQlContext.getOrDefault("coroutine-context", EmptyCoroutineContext)
         runSuspendingFunction(parameterValues, context)
       } else {
         runBlockingFunction(parameterValues)

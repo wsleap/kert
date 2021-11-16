@@ -106,7 +106,7 @@ class GraphQlServerBuilder(private val routerBuilder: HttpRouterDsl) {
       val request = mapper.readValue(json, GraphqlRequest::class.java)
 
       val input = newExecutionInput()
-        .context(coroutineContext)
+        .graphQLContext(mapOf("coroutine-context" to coroutineContext))
         .query(request.query)
         .operationName(request.operationName ?: "")
         .variables(request.variables ?: emptyMap())
