@@ -5,10 +5,7 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.await
 import io.vertx.kotlin.coroutines.dispatcher
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.slf4j.MDCContext
 import mu.KotlinLogging
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -100,13 +97,12 @@ open class HttpRouterBuilder(private val vertx: Vertx,
     return context.dispatcher() + VertxRoutingContext(routingContext) + MDCContext() + exceptionHandler()
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   private fun registerCall(method: HttpMethod, path: String, handler: HttpServerHandler, filter: HttpServerFilter?) {
     underlying.route(method, path).handler { routingContext ->
       val request = HttpServerRequest(routingContext.request(), routingContext)
       val context = Vertx.currentContext()
 
-      GlobalScope.launch(createContext(routingContext)) {
+      CoroutineScope(createContext(routingContext)).launch {
         val response = filter?.let { it(request, handler) } ?: handler(request)
         val vertxResponse = routingContext.response()
 
