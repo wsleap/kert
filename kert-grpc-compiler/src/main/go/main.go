@@ -1,10 +1,10 @@
 package main
 
 import (
-	"./generator"
-	"./util"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 	"io/ioutil"
+	"leap.ws/kert-grpc-compiler/generator"
+	"leap.ws/kert-grpc-compiler/util"
 	"os"
 )
 

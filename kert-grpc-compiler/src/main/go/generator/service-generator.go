@@ -1,9 +1,9 @@
 package generator
 
 import (
-	"./templates"
 	"bytes"
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	descriptor "google.golang.org/protobuf/types/descriptorpb"
+	"leap.ws/kert-grpc-compiler/generator/templates"
 	"path"
 	"strings"
 	"text/template"

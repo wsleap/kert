@@ -47,8 +47,9 @@ fun Project.grpcPluginSupport(pluginName: String) {
   tasks.register("buildPlugin") {
     doLast {
       exec {
+        workingDir = file("src/main/go")
         environment = environment + mapOf("GOOS" to goOs(os), "GOARCH" to goArch(arch))
-        commandLine = listOf("go", "build", "-o", pluginPath, "src/main/go/main.go")
+        commandLine = listOf("go", "build", "-o", pluginPath, "main.go")
       }
     }
   }
