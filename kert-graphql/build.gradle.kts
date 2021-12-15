@@ -1,7 +1,7 @@
 import build.*
 
 plugins {
-  id("com.expediagroup.graphql") version "5.3.0"
+  id("com.expediagroup.graphql") version "5.3.1"
 }
 
 description = "Kert GraphQL support"
@@ -9,8 +9,8 @@ description = "Kert GraphQL support"
 librarySupport()
 
 dependencies {
-  val graphqlKotlinVersion = "5.3.0"
-  val jacksonVersion = "2.12.3"
+  val graphqlKotlinVersion = "5.3.1"
+  val jacksonVersion = "2.13.0"
 
   api(project(":kert-http"))
   api("com.expediagroup:graphql-kotlin-server:${graphqlKotlinVersion}")

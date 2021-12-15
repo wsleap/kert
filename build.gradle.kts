@@ -36,7 +36,7 @@ allprojects {
   }
 
   dependencies {
-    implementation("io.github.microutils:kotlin-logging:2.0.11")
+    implementation("io.github.microutils:kotlin-logging:2.1.16")
 
     testImplementation("io.kotest:kotest-framework-engine-jvm:${Deps.kotestVersion}")
     testImplementation("io.kotest:kotest-runner-junit5-jvm:${Deps.kotestVersion}")
@@ -122,5 +122,12 @@ allprojects {
    */
   signing {
     isRequired = !isSnapshot
+  }
+
+  // configure the test log output
+  configure<com.adarshr.gradle.testlogger.TestLoggerExtension> {
+    theme = com.adarshr.gradle.testlogger.theme.ThemeType.MOCHA
+    showExceptions = true
+    showStandardStreams = false
   }
 }
