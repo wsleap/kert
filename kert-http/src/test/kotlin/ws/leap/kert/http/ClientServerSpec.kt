@@ -27,12 +27,13 @@ abstract class ClientServerSpec : FunSpec() {
   // TODO enable this when all problems fixed
   override fun testCaseOrder() = TestCaseOrder.Random
 
-  override fun beforeSpec(spec: Spec) {
-    server.start()
-  }
-
-  override fun afterSpec(spec: Spec) {
-    server.stop()
-    vertx.close()
+  init {
+    beforeSpec {
+      server.start()
+    }
+    afterSpec {
+      server.stop()
+      vertx.close()
+    }
   }
 }

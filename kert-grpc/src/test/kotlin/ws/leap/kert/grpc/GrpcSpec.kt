@@ -24,11 +24,16 @@ abstract class GrpcSpec : FunSpec() {
   }
   protected abstract fun configureServer(builder: GrpcServerBuilder)
 
-  override fun beforeSpec(spec: Spec) = runBlocking<Unit> {
-    server.start()
-  }
-
-  override fun afterSpec(spec: Spec) = runBlocking {
-    server.stop()
+  init {
+    beforeSpec {
+      runBlocking {
+        server.start()
+      }
+    }
+    afterSpec {
+      runBlocking {
+        server.stop()
+      }
+    }
   }
 }

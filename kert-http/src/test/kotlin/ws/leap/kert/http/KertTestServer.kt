@@ -106,7 +106,7 @@ fun createKertServer(vertx: Vertx, port: Int): TestServer {
   }
 }
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
   val server = createHttpServer(Vertx.vertx(), 8000)
   server.start()
 }

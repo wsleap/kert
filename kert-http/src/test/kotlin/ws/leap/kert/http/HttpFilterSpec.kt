@@ -78,15 +78,15 @@ class HttpFilterSpec : FunSpec() {
     }
   }
 
-  override fun beforeSpec(spec: Spec) = runBlocking {
-    server.start()
-  }
-
-  override fun afterSpec(spec: Spec) = runBlocking {
-    server.stop()
-  }
-
   init {
+    beforeSpec {
+      server.start()
+    }
+
+    afterSpec {
+      server.stop()
+    }
+
     context("filter on sub router") {
       test("/sub/ping works with authentication header") {
         val resp = client.get("/sub/ping")

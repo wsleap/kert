@@ -1,7 +1,7 @@
 import build.*
 
 plugins {
-  id("com.expediagroup.graphql") version "5.3.2"
+  alias(libs.plugins.graphql)
 }
 
 description = "Kert GraphQL support"

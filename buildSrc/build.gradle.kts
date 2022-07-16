@@ -8,8 +8,8 @@ repositories {
 }
 
 dependencies {
-  implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10")
+  implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10")
   implementation("com.google.gradle:osdetector-gradle-plugin:1.6.2")
   implementation("com.google.protobuf:protobuf-gradle-plugin:0.8.13")
-  implementation("org.jetbrains.dokka:dokka-gradle-plugin:1.6.10")
+  implementation("org.jetbrains.dokka:dokka-gradle-plugin:1.7.10")
 }

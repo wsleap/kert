@@ -38,7 +38,7 @@ internal class HttpClientImpl (private val underlying: io.vertx.core.http.impl.H
     return HttpClientImpl(underlying, filters, options)
   }
 
-  override val protocolVersion: HttpVersion = underlying.options.protocolVersion
+  override val protocolVersion: HttpVersion = underlying.options().protocolVersion
 
   private suspend fun callHttp(request: HttpClientRequest): HttpClientResponse {
     val responseDeferred = CompletableDeferred<HttpClientResponse>()

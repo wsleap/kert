@@ -7,9 +7,9 @@ plugins {
   kotlin("jvm") apply false  // Enables Kotlin Gradle plugin
   signing
   `maven-publish`
-  id("com.github.ben-manes.versions").version("0.39.0")
-  id("com.adarshr.test-logger").version("3.0.0")
-  id("io.kotest") version "0.3.9"
+  alias(libs.plugins.versions)
+  alias(libs.plugins.test.logger)
+  alias(libs.plugins.kotest)
 }
 
 allprojects {
@@ -77,7 +77,7 @@ allprojects {
     withType<KotlinCompile> {
       kotlinOptions {
         jvmTarget = "1.8"
-        freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+        freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn", /*"-Xuse-k2"*/)
       }
     }
 
