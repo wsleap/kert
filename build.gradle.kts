@@ -1,4 +1,3 @@
-import build.*
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -36,13 +35,12 @@ allprojects {
   }
 
   dependencies {
-    implementation("io.github.microutils:kotlin-logging:2.1.21")
+    // "libs" not working, must use "rootProject.libs" here
+    // https://github.com/gradle/gradle/issues/16634
+    implementation(rootProject.libs.kotlin.logging)
 
-    testImplementation("io.kotest:kotest-framework-engine-jvm:${Deps.kotestVersion}")
-    testImplementation("io.kotest:kotest-runner-junit5-jvm:${Deps.kotestVersion}")
-    testImplementation("io.kotest:kotest-assertions-core-jvm:${Deps.kotestVersion}")
-    testImplementation("ch.qos.logback:logback-classic:1.2.3")
-    // testImplementation("org.slf4j:slf4j-simple:1.7.25")
+    testImplementation(rootProject.libs.bundles.kotest)
+    testImplementation(rootProject.libs.logback.classic)
   }
 
   // set target jvm version, otherwise gradle will use the jdk version during compiling for "org.gradle.jvm.version" in module file

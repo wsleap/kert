@@ -30,10 +30,11 @@ private fun goOs(os: String): String {
  * Configure the project as a GRPC plugin.
  * It adds support for compiling the plugin to Linux, Windows and MacOS, and publishing support.
  */
-fun Project.grpcPluginSupport(pluginName: String) {
+fun Project.configureGrpcPlugin(pluginName: String) {
   val testImplementation by configurations
+  val libs = versionCatalog("libs")
   dependencies {
-    testImplementation(kotlin("stdlib-jdk8"))
+    testImplementation(libs.library("kotlin-stdlib"))
   }
 
   // overwrite os & arch if specified by command line
@@ -67,7 +68,7 @@ fun Project.grpcPluginSupport(pluginName: String) {
   protobuf {
     generatedFilesBaseDir = "$projectDir/gen"
     protoc {
-      artifact = "com.google.protobuf:protoc:${Deps.protobufVersion}"
+      artifact = "com.google.protobuf:protoc:${libs.version("protobuf")}"
     }
     plugins {
       id("grpc-kert") {

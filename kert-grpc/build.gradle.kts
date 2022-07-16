@@ -3,27 +3,27 @@ import com.google.protobuf.gradle.*
 
 description = "Kert GRPC support"
 
-librarySupport()
+configureLibrary()
 
 dependencies {
   api(project(":kert-http"))
-  api("com.google.protobuf:protobuf-java:${Deps.protobufVersion}")
-  api("io.grpc:grpc-protobuf:${Deps.grpcJavaVersion}")
-  api("com.google.protobuf:protobuf-kotlin:${Deps.protobufVersion}")
+  api(libs.protobuf.java)
+  api(libs.protobuf.kotlin)
+  api(libs.grpc.protobuf)
 
-  api("javax.annotation:javax.annotation-api:1.3.2")
+  api(libs.javax.annotation.api)
 
   // generateTestProto needs compiler binary
   compileOnly(project(":kert-grpc-compiler"))
 
-  testImplementation("io.grpc:grpc-stub:${Deps.grpcJavaVersion}")
-  testImplementation("io.grpc:grpc-netty:${Deps.grpcJavaVersion}")
+  testImplementation(libs.grpc.stub)
+  testImplementation(libs.grpc.netty)
 }
 
 protobuf {
   generatedFilesBaseDir = "$projectDir/gen"
   protoc {
-    artifact = "com.google.protobuf:protoc:${Deps.protobufVersion}"
+    artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
   }
   plugins {
     id("grpc-kert") {
@@ -31,7 +31,7 @@ protobuf {
     }
     // generate java version for performance comparison
     id("grpc-java") {
-      artifact = "io.grpc:protoc-gen-grpc-java:${Deps.grpcJavaVersion}"
+      artifact = "io.grpc:protoc-gen-grpc-java:${libs.versions.grpc.get()}"
     }
   }
   generateProtoTasks {

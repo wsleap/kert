@@ -2,18 +2,16 @@ import build.*
 
 description = "Kert HTTP support"
 
-librarySupport()
+configureLibrary()
 
 dependencies {
-  api("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Deps.kotlinVersion}")
-  api("org.jetbrains.kotlin:kotlin-reflect:${Deps.kotlinVersion}")
-  api("org.jetbrains.kotlin:kotlin-script-runtime:${Deps.kotlinVersion}")
-  api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Deps.kotlinCoroutineVersion}")
+  api(libs.bundles.kotlin)
 
-  api("io.vertx:vertx-web:${Deps.vertxVersion}")
-  api("io.vertx:vertx-lang-kotlin-coroutines:${Deps.vertxVersion}")
+  api(libs.kotlinx.coroutines)
+  api(libs.kotlinx.coroutines.slf4j)
 
-  api("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:${Deps.kotlinCoroutineVersion}")
+  api(libs.vertx.web)
+  api(libs.vertx.lang.kotlin.coroutines)
 
-  testImplementation("io.vertx:vertx-web-client:${Deps.vertxVersion}")
+  testImplementation(libs.vertx.web.client)
 }
