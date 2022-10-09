@@ -19,7 +19,7 @@ val defaultGrpcExceptionHandler = CoroutineExceptionHandler { context, exception
     ?: throw IllegalStateException("Routing context is not available on coroutine context")
 
   val method = routingContext.request().path().removePrefix("/")
-  grpcExceptionLogger.warn("GRPC call failed: method=$method, exception=${exception.javaClass.name}")
+  grpcExceptionLogger.warn("GRPC call failed: method=$method", exception)
 
   val response = routingContext.response()
   if (!response.ended()) {
