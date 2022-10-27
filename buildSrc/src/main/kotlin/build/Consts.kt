@@ -1,16 +1,9 @@
 package build
 
-import com.google.gradle.osdetector.OsDetector
 import org.gradle.api.Action
 import org.gradle.api.publish.maven.MavenPom
 
 object Consts {
-  private val osDetector = OsDetector()
-
-  val os: String = osDetector.os
-  val arch: String = osDetector.arch
-  val exeSuffix = if(os == "windows") ".exe" else ""
-
   val pom = Action<MavenPom> {
     name.set("kert")
     description.set("Concise HTTP & GRPC library for Kotlin")

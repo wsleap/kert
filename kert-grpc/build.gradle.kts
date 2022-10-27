@@ -27,7 +27,10 @@ protobuf {
   }
   plugins {
     id("grpc-kert") {
-      path = "$rootDir/kert-grpc-compiler/build/exe/protoc-gen-grpc-kert${Consts.exeSuffix}"
+      val osDetector = extensions.getByType(com.google.gradle.osdetector.OsDetector::class)
+      val exeSuffix = if(osDetector.os == "windows") ".exe" else ""
+
+      path = "$rootDir/kert-grpc-compiler/build/exe/protoc-gen-grpc-kert${exeSuffix}"
     }
     // generate java version for performance comparison
     id("grpc-java") {

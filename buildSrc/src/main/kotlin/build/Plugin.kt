@@ -1,5 +1,6 @@
 package build
 
+import com.google.gradle.osdetector.OsDetector
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.*
 import org.gradle.api.tasks.Copy
@@ -10,6 +11,7 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.plugins.signing.SigningExtension
+import org.gradle.kotlin.dsl.*
 
 private fun goArch(arch: String): String {
   return when(arch) {
@@ -31,6 +33,8 @@ private fun goOs(os: String): String {
  * It adds support for compiling the plugin to Linux, Windows and MacOS, and publishing support.
  */
 fun Project.configureGrpcPlugin(pluginName: String) {
+  val osDetector = extensions.getByType(OsDetector::class)
+
   val testImplementation by configurations
   val libs = versionCatalog("libs")
   dependencies {
@@ -38,8 +42,8 @@ fun Project.configureGrpcPlugin(pluginName: String) {
   }
 
   // overwrite os & arch if specified by command line
-  val os = if (hasProperty("targetOs")) property("targetOs") as String else Consts.os
-  val arch = if (hasProperty("targetArch")) property("targetArch") as String else Consts.arch
+  val os = if (hasProperty("targetOs")) property("targetOs") as String else osDetector.os
+  val arch = if (hasProperty("targetArch")) property("targetArch") as String else osDetector.arch
   val exeSuffix = if(os == "windows") ".exe" else ""
 
   val pluginPath = "$buildDir/exe/$pluginName${exeSuffix}"
@@ -65,7 +69,7 @@ fun Project.configureGrpcPlugin(pluginName: String) {
     into(artifactStagingPath)
   }
 
-  protobuf {
+  configure<ProtobufExtension> {
     generatedFilesBaseDir = "$projectDir/gen"
     protoc {
       artifact = "com.google.protobuf:protoc:${libs.version("protobuf")}"
