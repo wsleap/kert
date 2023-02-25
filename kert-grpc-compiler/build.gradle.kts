@@ -10,7 +10,7 @@ dependencies {
 }
 
 tasks {
-  register("setup") {
+  /*register("setup") {
     exec {
       commandLine = listOf(
         "go", "get", "-t",
@@ -19,5 +19,5 @@ tasks {
         "github.com/golang/protobuf/protoc-gen-go/plugin"
       )
     }
-  }
+  }*/
 }
