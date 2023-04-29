@@ -9,6 +9,7 @@ import com.google.protobuf.gradle.*
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.kotlin.dsl.*
@@ -49,14 +50,10 @@ fun Project.configureGrpcPlugin(pluginName: String) {
   val pluginPath = "$buildDir/exe/$pluginName${exeSuffix}"
   val artifactStagingPath: File = file("$buildDir/artifacts")
 
-  tasks.register("buildPlugin") {
-    doLast {
-      exec {
-        workingDir = file("src/main/go")
-        environment = environment + mapOf("GOOS" to goOs(os), "GOARCH" to goArch(arch))
-        commandLine = listOf("go", "build", "-o", pluginPath, "main.go")
-      }
-    }
+  tasks.register("buildPlugin", Exec::class) {
+    workingDir = file("src/main/go")
+    environment = environment + mapOf("GOOS" to goOs(os), "GOARCH" to goArch(arch))
+    commandLine = listOf("go", "build", "-o", pluginPath, "main.go")
   }
 
   tasks.register("buildArtifacts", Copy::class) {
