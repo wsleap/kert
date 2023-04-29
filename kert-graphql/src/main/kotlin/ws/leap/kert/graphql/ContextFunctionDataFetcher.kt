@@ -2,33 +2,25 @@ package ws.leap.kert.graphql
 
 import com.expediagroup.graphql.generator.execution.FunctionDataFetcher
 import com.expediagroup.graphql.generator.execution.SimpleKotlinDataFetcherFactoryProvider
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import graphql.schema.DataFetcherFactory
 import graphql.schema.DataFetchingEnvironment
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.instanceParameter
 
-open class ContextDataFetcherFactoryProvider(
-  private val objectMapper: ObjectMapper = jacksonObjectMapper()
-) : SimpleKotlinDataFetcherFactoryProvider(objectMapper) {
+open class ContextDataFetcherFactoryProvider : SimpleKotlinDataFetcherFactoryProvider() {
 
   override fun functionDataFetcherFactory(target: Any?, kFunction: KFunction<*>) = DataFetcherFactory {
     ContextFunctionDataFetcher(
       target = target,
-      fn = kFunction,
-      objectMapper = objectMapper
+      fn = kFunction
     )
   }
 }
 
 class ContextFunctionDataFetcher(
   private val target: Any?,
-  private val fn: KFunction<*>,
-  objectMapper: ObjectMapper = jacksonObjectMapper()
-) : FunctionDataFetcher(target, fn, objectMapper) {
+  private val fn: KFunction<*>
+) : FunctionDataFetcher(target, fn) {
   override fun get(environment: DataFetchingEnvironment): Any? {
     val instance: Any? = target ?: environment.getSource<Any?>()
     val instanceParameter = fn.instanceParameter
@@ -38,8 +30,7 @@ class ContextFunctionDataFetcher(
         .plus(instanceParameter to instance)
 
       if (fn.isSuspend) {
-        val context: CoroutineContext = environment.graphQlContext.getOrDefault("coroutine-context", EmptyCoroutineContext)
-        runSuspendingFunction(parameterValues, context)
+        runSuspendingFunction(environment, parameterValues)
       } else {
         runBlockingFunction(parameterValues)
       }

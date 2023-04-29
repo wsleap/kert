@@ -68,5 +68,6 @@ fun main() {
 
   runBlocking {
     server.start()
+    println("Server started at http://localhost:8500/graphql")
   }
 }
