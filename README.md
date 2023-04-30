@@ -3,8 +3,10 @@
 [<img src="https://img.shields.io/maven-central/v/ws.leap.kert/kert-http.svg?label=latest%20release"/>](https://search.maven.org/search?q=g:ws.leap.kert)
 [<img src="https://img.shields.io/nexus/s/https/oss.sonatype.org/ws.leap.kert/kert-http.svg?label=latest%20snapshot"/>](https://oss.sonatype.org/content/repositories/snapshots/ws/leap/kert/)
 
-# <img src='logo.png' width='36' height='36'> Kert
+# Kert
 Kert is a concise HTTP, GRPC and GraphQL library for Kotlin. It's not an Android library, it's a JVM library for backend development.
+
+<img src='logo.png' width='36' height='36'> 
 
 Compare to the official [gRPC-Java](https://github.com/grpc/grpc-java), Kert provides the benefits like:
 * No need for 2 separate libraries / ports to serve HTTP and GRPC requests.
