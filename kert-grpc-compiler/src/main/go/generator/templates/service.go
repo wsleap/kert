@@ -25,7 +25,7 @@ import ws.leap.kert.grpc.GrpcUtils
  * </pre>
  */}}
 @javax.annotation.Generated(
-  value = ["by gRPC proto compiler (version 0.5.0)"],
+  value = ["by Kert gRPC proto compiler"],
   comments = "Source: {{.ProtoFile}}")
 object {{$s.Name}}GrpcKt {
   const val SERVICE_NAME = "{{$s.ProtoName}}"
