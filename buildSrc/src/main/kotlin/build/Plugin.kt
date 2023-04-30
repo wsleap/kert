@@ -14,10 +14,13 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.kotlin.dsl.*
 
+// os/arch from osDetector https://github.com/trustin/os-maven-plugin
+// os/arch for golang https://go.dev/doc/install/source#environment
 private fun goArch(arch: String): String {
   return when(arch) {
     "x86_64" -> "amd64"
     "x86_32" -> "386"
+    "aarch_64" -> "arm64"
     else -> throw RuntimeException("Unsupported arch $arch")
   }
 }
@@ -25,7 +28,9 @@ private fun goArch(arch: String): String {
 private fun goOs(os: String): String {
   return when(os) {
     "osx" -> "darwin"
-    else -> os
+    "linux" -> "linux"
+    "windows" -> "windows"
+    else -> throw RuntimeException("Unsupported os $os")
   }
 }
 
@@ -67,7 +72,7 @@ fun Project.configureGrpcPlugin(pluginName: String) {
   }
 
   configure<ProtobufExtension> {
-    generatedFilesBaseDir = "$projectDir/gen"
+    // generatedFilesBaseDir = "$projectDir/gen"
     protoc {
       artifact = "com.google.protobuf:protoc:${libs.version("protobuf")}"
     }
@@ -78,7 +83,6 @@ fun Project.configureGrpcPlugin(pluginName: String) {
     }
     generateProtoTasks {
       all().forEach { task ->
-        task.dependsOn("buildPlugin")
         task.inputs.file(pluginPath)
       }
       ofSourceSet("test").forEach { task ->
@@ -90,12 +94,6 @@ fun Project.configureGrpcPlugin(pluginName: String) {
         }
       }
     }
-  }
-
-  configure<JavaPluginExtension> {
-    sourceSets(closureOf<SourceSetContainer> {
-      getByName("test").java.srcDir("$projectDir/gen/test/kotlin")
-    })
   }
 
   configure<PublishingExtension> {

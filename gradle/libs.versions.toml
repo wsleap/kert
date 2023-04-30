@@ -2,6 +2,7 @@
 
 [versions]
 kotlin = "1.8.21"
+dokka = "1.8.10"
 kotlinx-coroutines = "1.6.4"
 vertx = "4.4.1"
 protobuf = "3.22.3"
@@ -36,12 +37,18 @@ jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-module-afterburner = { module = "com.fasterxml.jackson.module:jackson-module-afterburner", version.ref = "jackson" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
-dokka-kotlin-as-java-plugin = { module = "org.jetbrains.dokka:kotlin-as-java-plugin", version.ref = "kotlin" }
+dokka-kotlin-as-java-plugin = { module = "org.jetbrains.dokka:kotlin-as-java-plugin", version.ref = "dokka" }
 kotlin-logging = { module = "io.github.microutils:kotlin-logging", version.ref = "kotlin-logging" }
 kotest-framework-engine-jvm = { module = "io.kotest:kotest-framework-engine-jvm", version.ref = "kotest" }
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+# plugins (for buildSrc)
+plugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+plugin-os-detector = { module = "com.google.gradle:osdetector-gradle-plugin", version = "1.7.3" }
+plugin-protobuf = { module = "com.google.protobuf:protobuf-gradle-plugin", version = "0.9.3" }
+plugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 
 [bundles]
 kotlin = [

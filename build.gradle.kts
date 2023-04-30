@@ -49,27 +49,7 @@ allprojects {
     targetCompatibility = JavaVersion.VERSION_1_8
   }
 
-  sourceSets {
-    main {
-      java {
-        srcDir("$projectDir/gen/main/java")
-      }
-    }
-
-    test {
-      java {
-        srcDir("$projectDir/gen/test/java")
-      }
-    }
-  }
-
   tasks {
-    named("clean").configure {
-      doFirst {
-        delete("gen")
-      }
-    }
-
     withType<Test> {
       useJUnitPlatform()
     }

@@ -21,7 +21,6 @@ dependencies {
 }
 
 protobuf {
-  generatedFilesBaseDir = "$projectDir/gen"
   protoc {
     artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
   }
@@ -61,11 +60,6 @@ protobuf {
   }
 }
 
-sourceSets {
-  test {
-    java {
-      srcDir("$projectDir/gen/test/grpc-kert")
-      srcDir("$projectDir/gen/test/grpc-java")
-    }
-  }
+tasks.named("generateProto") {
+  dependsOn(":kert-grpc-compiler:buildPlugin")
 }
