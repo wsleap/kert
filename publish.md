@@ -23,13 +23,19 @@ Ticket: https://issues.sonatype.org/browse/OSSRH-62510
 ### Publish to Sonatype
 1. Update version number (remove SNAPSHOT)
 1. Publish to staging area
-    ```shell
-    gradle clean :kert-compiler:publish -PtargetOs=linux -PtargetArch=x86_64
-    gradle clean :kert-compiler:publish -PtargetOs=windows -PtargetArch=x86_64
-    gradle clean :kert-compiler:publish -PtargetOs=osx -PtargetArch=x86_64
-    gradle :kert-http:publish
-    gradle :kert-grpc:publish
-    ```
+```shell
+# Linux 64bit  
+gradle clean :kert-grpc-compiler:publish -PtargetOs=linux -PtargetArch=x86_64
+# Windows 64bit
+gradle clean :kert-grpc-compiler:publish -PtargetOs=windows -PtargetArch=x86_64
+# Mac Intel
+gradle clean :kert-grpc-compiler:publish -PtargetOs=osx -PtargetArch=x86_64
+# Mac M1/M2
+gradle clean :kert-grpc-compiler:publish -PtargetOs=osx -PtargetArch=aarch_64
+gradle :kert-http:publish
+gradle :kert-grpc:publish
+gradle :kert-graphql:publish
+```
 1. Bump version number (add SNAPSHOT back)
 
 Use this to check file format for the compiler
