@@ -1,8 +1,8 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub:conventional-dependencies-toml
 
 [versions]
-kotlin = "1.8.21"
-dokka = "1.8.10"
+kotlin = "1.9.10"
+dokka = "1.9.10"
 kotlinx-coroutines = "1.6.4"
 vertx = "4.4.1"
 protobuf = "3.22.3"
